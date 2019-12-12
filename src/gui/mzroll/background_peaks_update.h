@@ -108,6 +108,8 @@ public:
                              vector<mzSample*> samples,
                              MavenParameters* mavenParameters);
 
+    void classifyGroups(vector<PeakGroup> &group);
+
 Q_SIGNALS:
 
 	/**
@@ -145,6 +147,9 @@ protected:
 	
 private:
 	string runFunction;
+    bool _untargetedMustHaveMs2;
+    bool _classifyPeakGroup;
+    string runFunction;
 	MainWindow *mainwindow;
 
 	/**
