@@ -92,7 +92,6 @@ INCLUDEPATH +=  $$top_srcdir/src/core/libmaven  \
                 $$top_srcdir/3rdparty/Logger \
                 $$top_srcdir/src/pollyCLI \
                 $$top_srcdir/src/projectDB \
-                $$top_srcdir/3rdparty/libsvm \
                 $$top_srcdir/3rdparty/libmgf \
                 $$top_srcdir/src/
 
@@ -118,7 +117,6 @@ LIBS +=  -lmaven \
          -lz \
          -lpollyCLI \
          -lprojectDB \
-         -lsvm \
          -lcommon \
          -lmgf
 

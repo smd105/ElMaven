@@ -49,8 +49,6 @@ class IsotopePlot;
 class Classifier;
 class ClassifierNeuralNet;
 class ClassifierNaiveBayes;
-class groupClassifier;
-class svmPredictor;
 class HeatMap;
 class ScatterPlot;
 class TreeMap;
@@ -198,14 +196,6 @@ public:
 	ClassifierNeuralNet* getClassifier() {
 		return clsf;
 	}
-
-	groupClassifier * getGroupClassifier() {
- 		return groupClsf;
- 	}
- 
-  	svmPredictor * getSVMPredictor() {
- 		return groupPred;
- 	}
 
         LibraryManager* getLibraryManager() { return _libraryManager; }
 
@@ -518,9 +508,7 @@ private:
 	Analytics* analytics;
 	QSettings* settings;
 	ClassifierNeuralNet* clsf;
-	groupClassifier* groupClsf;
- 	svmPredictor* groupPred;
-	 
+
 	QList<QPointer<TableDockWidget> > groupTables;
 	//Added when merging with Maven776 - Kiran
     QMap< QPointer<TableDockWidget>, QToolButton*> groupTablesButtons;

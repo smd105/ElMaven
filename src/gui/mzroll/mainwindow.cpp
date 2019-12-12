@@ -19,7 +19,6 @@
 #include "eiclogic.h"
 #include "eicwidget.h"
 #include "globals.h"
-#include "groupClassifier.h"
 #include "grouprtwidget.h"
 #include "heatmap.h"
 #include "infodialog.h"
@@ -59,7 +58,6 @@
 #include "spectramatching.h"
 #include "spectrawidget.h"
 #include "suggest.h"
-#include "svmPredictor.h"
 #include "tabledockwidget.h"
 #include "treedockwidget.h"
 #include "treemap.h"
@@ -233,15 +231,6 @@ using namespace mzUtils;
     #endif
 
     clsfModelFilename = appDir + "default.model";
-    weightsFile = appDir + "group.weights";
-    modelFile = appDir + "svm.model";
-
-	groupClsf = new groupClassifier();
-        groupClsf->loadModel(weightsFile.toStdString());
- 
-  	groupPred = new svmPredictor();
-        groupPred->loadModel(modelFile.toStdString());
-
 
    /* double massCutoff=settings->value("compoundMassCutoffWindow").toDouble();
       string massCutoffType=settings->value("massCutoffType").toString().toStdString();
