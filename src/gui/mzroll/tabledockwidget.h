@@ -3,7 +3,6 @@
 
 #include <QWidgetAction>
 
-#include "pollyintegration.h"
 #include "stable.h"
 
 class MainWindow;
@@ -28,8 +27,6 @@ public:
   QTreeWidget *treeWidget;
   QLabel *titlePeakTable;
   JSONReports *jsonReports;
-  int numberOfGroupsMarked = 0;
-  QString writableTempS3Dir;
   /**
    * @brief vallgroups will be used by libmaven/jsonReports.cpp
    * @detail For json export. Since libmaven is written only standard
@@ -219,9 +216,6 @@ public Q_SLOTS:
   void updateTable();
   void updateItem(QTreeWidgetItem *item, bool updateChildren = true);
   void updateStatus();
-
-  //Group validation functions
-  void validateGroup(PeakGroup* grp, QTreeWidgetItem* item);
 
   virtual void markGroupBad();
   virtual void markGroupGood();
@@ -445,21 +439,5 @@ public:
   virtual void keyPressEvent(QKeyEvent *event);
   void setData(QStringList vstrings) { strings = vstrings; }
 };
-
-class UploadPeaksToCloudThread : public QThread
-{
-    Q_OBJECT
-    public:
-        UploadPeaksToCloudThread(PollyIntegration* iPolly);
-        ~UploadPeaksToCloudThread();
-        void run();
-        QString sessionId;
-        QString fileName;
-        QString filePath;
-        PollyIntegration* _pollyintegration;
-    signals:
-        void resultReady(QString sessionId);
-};
-
 
 #endif
