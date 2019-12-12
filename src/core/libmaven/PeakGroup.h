@@ -147,8 +147,11 @@ class PeakGroup{
         unsigned int  maxPeakOverlap;
         float maxQuality;
         float avgPeakQuality;
+
         ClassifiedLabel predictedLabel;
         float predictionProbability;
+        map<string, float> predictionInference;
+
         double minQuality;
         float maxPeakFracionalArea;
         float maxSignalBaseRatio;
