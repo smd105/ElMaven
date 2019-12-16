@@ -154,7 +154,7 @@ void TableDockWidget::setIntensityColName() {
     break;
   }
   _mainwindow->currentIntensityName = temp;
-  header->setText(9, temp);
+  header->setText(10, temp);
 }
 
 void TableDockWidget::setupPeakTable() {
@@ -162,6 +162,7 @@ void TableDockWidget::setupPeakTable() {
   QStringList colNames;
 
   // Add common coulmns to the Table
+  colNames << "Label"; // TODO: add this column conditionally
   colNames << "#";
   colNames << "ID";
   colNames << "Observed m/z";
@@ -269,9 +270,9 @@ void TableDockWidget::updateItem(QTreeWidgetItem *item, bool updateChildren) {
     }
   }
   if (viewType == groupView)
-    item->setText(11, QString::number(group->maxQuality, 'f', 2));
+    item->setText(12, QString::number(group->maxQuality, 'f', 2));
 
-  item->setText(1, QString(group->getName().c_str()));
+  item->setText(2, QString(group->getName().c_str()));
 
   int good = 0;
   int bad = 0;
@@ -296,19 +297,45 @@ void TableDockWidget::updateItem(QTreeWidgetItem *item, bool updateChildren) {
   if (group->label == 'g'
       || group->predictedLabel == PeakGroup::ClassifiedLabel::Signal) {
     item->setIcon(0, QIcon(":/images/good.png"));
+    // we have to store stringified classifier labels because QVariant has
+    // issues with standard enum classes
+    QString castLabel = "PeakGroup::ClassifiedLabel::Signal";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
   } else if (group->label == 'b'
              || group->predictedLabel == PeakGroup::ClassifiedLabel::Noise) {
     item->setIcon(0, QIcon(":/images/bad.png"));
+    QString castLabel = "PeakGroup::ClassifiedLabel::Noise";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
   } else if (group->predictedLabel == PeakGroup::ClassifiedLabel::Correlation) {
     item->setIcon(0, QIcon(":/images/moi_correlated.png"));
+    QString castLabel = "PeakGroup::ClassifiedLabel::Correlation";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
   } else if (group->predictedLabel == PeakGroup::ClassifiedLabel::Pattern) {
     item->setIcon(0, QIcon(":/images/moi_pattern.png"));
+    QString castLabel = "PeakGroup::ClassifiedLabel::Pattern";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
   } else if (group->predictedLabel
              == PeakGroup::ClassifiedLabel::CorrelationAndPattern) {
     item->setIcon(0, QIcon(":/images/moi_pattern_correlated.png"));
+    QString castLabel = "PeakGroup::ClassifiedLabel::CorrelationAndPattern";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
   } else {
     item->setIcon(0, QIcon());
-  }
+    QString castLabel = "PeakGroup::ClassifiedLabel::None";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
+ }
 
   if (filtersDialog->isVisible()) {
     float minG = sliders["GoodPeakCount"]->minBoundValue();
@@ -396,7 +423,7 @@ void TableDockWidget::addRow(shared_ptr<PeakGroup> group,
   NumericTreeWidgetItem *item = new NumericTreeWidgetItem(root, 0);
   item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled |
                  Qt::ItemIsDragEnabled);
-  item->setData(0, Qt::UserRole, QVariant::fromValue(group));
+  item->setData(1, Qt::UserRole, QVariant::fromValue(group));
 
   item->setText(0, QString::number(group->groupId));
   item->setText(1, QString(group->getName().c_str()));
@@ -406,26 +433,41 @@ void TableDockWidget::addRow(shared_ptr<PeakGroup> group,
   if (group->getExpectedMz(charge) != -1) {
     float mz = group->getExpectedMz(charge);
 
-    item->setText(3, QString::number(mz, 'f', 4));
+    item->setText(4, QString::number(mz, 'f', 4));
   } else {
-    item->setText(3, "NA");
+    item->setText(4, "NA");
   }
 
-  item->setText(4, QString::number(group->meanRt, 'f', 2));
+  item->setText(5, QString::number(group->meanRt, 'f', 2));
 
-  if (group->label == 'g')
+  if (group->label == 'g') {
     item->setIcon(0, QIcon(":/images/good.png"));
-  if (group->label == 'b')
+    QString castLabel = "PeakGroup::ClassifiedLabel::Signal";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
+  } else if (group->label == 'b') {
     item->setIcon(0, QIcon(":/images/bad.png"));
+    QString castLabel = "PeakGroup::ClassifiedLabel::Noise";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
+  } else {
+    item->setIcon(0, QIcon());
+    QString castLabel = "PeakGroup::ClassifiedLabel::None";
+    item->setData(0,
+                  Qt::UserRole,
+                  QVariant::fromValue(castLabel));
+  }
 
   if (viewType == groupView) {
     auto expectedRtDiff = group->expectedRtDiff();
     if (expectedRtDiff == -1.0f) {
-      item->setText(5, "NA");
+      item->setText(6, "NA");
     } else {
-      item->setText(5, QString::number(expectedRtDiff, 'f', 2));
+      item->setText(6, QString::number(expectedRtDiff, 'f', 2));
     }
-    item->setText(6, QString::number(group->sampleCount
+    item->setText(7, QString::number(group->sampleCount
                                      + group->blankSampleCount));
     item->setText(7, QString::number(group->goodPeakCount));
     item->setText(8, QString::number(group->maxNoNoiseObs));
@@ -439,8 +481,8 @@ void TableDockWidget::addRow(shared_ptr<PeakGroup> group,
 
     if (group->changeFoldRatio != 0) {
 
-      item->setText(16, QString::number(group->changeFoldRatio, 'f', 2));
-      item->setText(17, QString::number(group->changePValue, 'e', 4));
+      item->setText(17, QString::number(group->changeFoldRatio, 'f', 2));
+      item->setText(18, QString::number(group->changePValue, 'e', 4));
     }
 
     //Find maximum number of peaks
@@ -465,7 +507,7 @@ void TableDockWidget::addRow(shared_ptr<PeakGroup> group,
         vsamples, _mainwindow->getUserQuantType());
     for (unsigned int i = 0; i < yvalues.size(); i++) {
 
-      item->setText(5 + i, QString::number(yvalues[i]));
+      item->setText(6 + i, QString::number(yvalues[i]));
     }
     heatmapBackground(item);
   }
@@ -568,7 +610,7 @@ void TableDockWidget::showAllGroups() {
     if (clusterId && group->meanMz > 0 && group->peakCount() > 0) {
       if (!parents.contains(clusterId)) {
         parents[clusterId] = new QTreeWidgetItem(treeWidget);
-        parents[clusterId]->setText(0, QString("Cluster ") +
+        parents[clusterId]->setText(1, QString("Cluster ") +
                                            QString::number(clusterId));
         parents[clusterId]->setText(
             5, QString::number(group->meanRt, 'f', 2));
@@ -994,6 +1036,17 @@ void TableDockWidget::showSelectedGroup() {
   if (group != nullptr && _mainwindow != nullptr) {
     _mainwindow->setPeakGroup(group);
   }
+
+  if (item->childCount() > 0) {
+    vector<PeakGroup *> children;
+    for (int i = 0; i < item->childCount(); i++) {
+      QTreeWidgetItem *child = item->child(i);
+      QVariant data = child->data(1, Qt::UserRole);
+      PeakGroup *group = data.value<PeakGroup *>();
+      if (group)
+        children.push_back(group);
+    }
+  }
 }
 
 QList<shared_ptr<PeakGroup>> TableDockWidget::getSelectedGroups()
@@ -1016,14 +1069,39 @@ void TableDockWidget::showNotification()
   _mainwindow->showNotification(this);
 }
 
-shared_ptr<PeakGroup> TableDockWidget::getSelectedGroup()
-{
+QList<PeakGroup *>
+TableDockWidget::getCustomGroups(peakTableSelectionType peakSelection) {
+  QList<PeakGroup *> selectedGroups;
+  peakTableSelectionType temppeakSelection = peakSelection;
+  Q_FOREACH (QTreeWidgetItem *item, treeWidget->selectedItems()) {
+    if (item) {
+      QVariant v = item->data(1, Qt::UserRole);
+      PeakGroup *group = v.value<PeakGroup *>();
+      if (group != NULL) {
+        if (temppeakSelection == peakTableSelectionType::Good) {
+          if (group->label == 'g') {
+            selectedGroups.append(group);
+          }
+        } else if (temppeakSelection == peakTableSelectionType::Bad) {
+          if (group->label == 'b') {
+            selectedGroups.append(group);
+          }
+        } else {
+          selectedGroups.append(group);
+        }
+      }
+    }
+  }
+  return selectedGroups;
+}
+
+PeakGroup *TableDockWidget::getSelectedGroup() {
   QTreeWidgetItem *item = treeWidget->currentItem();
   if (!item)
     return NULL;
-  QVariant v = item->data(0, Qt::UserRole);
-  shared_ptr<PeakGroup> group = v.value<shared_ptr<PeakGroup>>();
-  if (group != nullptr) {
+  QVariant v = item->data(1, Qt::UserRole);
+  PeakGroup *group = v.value<PeakGroup *>();
+  if (group != NULL) {
     return group;
   } else
     return shared_ptr<PeakGroup>(nullptr);
@@ -2864,6 +2942,7 @@ void ScatterplotTableDockWidget::setupPeakTable() {
   QStringList colNames;
 
   // Add common columns to the table
+  colNames << "Label";
   colNames << "#";
   colNames << "ID";
   colNames << "Observed m/z";
