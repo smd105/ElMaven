@@ -241,7 +241,7 @@ int ProjectDatabase::saveGroupAndPeaks(PeakGroup* group,
     groupsQuery->bind(":expected_rt_diff", group->expectedRtDiff());
     groupsQuery->bind(":expected_abundance", group->getExpectedAbundance());
     groupsQuery->bind(":group_rank", group->groupRank);
-    groupsQuery->bind(":label", string(1, group->label));
+    groupsQuery->bind(":label", string(1, group->userLabel()));
     groupsQuery->bind(":type", static_cast<int>(group->type()));
     groupsQuery->bind(":srm_id", group->srmId);
 
@@ -1124,7 +1124,7 @@ ProjectDatabase::loadGroups(const vector<mzSample*>& loaded,
             group->tagIsotope(tagString, expectedMz, expectedAbundance);
 
         group->groupRank = groupsQuery->floatValue("group_rank");
-        group->label = groupsQuery->stringValue("label")[0];
+        group->setUserLabel(groupsQuery->stringValue("label")[0]);
         group->ms2EventCount = groupsQuery->integerValue("ms2_event_count");
         group->fragMatchScore.mergedScore =
             groupsQuery->doubleValue("ms2_score");

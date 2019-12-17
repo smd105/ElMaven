@@ -4399,7 +4399,7 @@ void MainWindow::markGroup(shared_ptr<PeakGroup> group, char label) {
 	if (!group)
 		return;
 
-	group->setLabel(label);
+    group->setUserLabel(label);
 	bookmarkPeakGroup(group);
 }
 

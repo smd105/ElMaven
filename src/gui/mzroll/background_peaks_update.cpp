@@ -518,7 +518,6 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
         return;
     }
 
-    classificationOutputFile = "/Users/khan/Downloads/final_moi.csv";
     QFile file(classificationOutputFile);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         cerr << "Error: failed to open classification output file" << endl;
@@ -604,10 +603,9 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
     for (auto& group : groups) {
         if (predictions.count(group.groupId)) {
             pair<int, float> prediction = predictions.at(group.groupId);
-            group.predictedLabel = classForLabel(prediction.first);
-            group.predictionProbability = prediction.second;
+            group.setPredictedLabel(classForLabel(prediction.first), prediction.second);
         }
         if (inferences.count(group.groupId))
-            group.predictionInference = inferences.at(group.groupId);
+            group.setPredictionInference(inferences.at(group.groupId));
     }
 }
