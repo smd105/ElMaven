@@ -4,6 +4,7 @@
 #include <QWidgetAction>
 
 #include "stable.h"
+#include "PeakGroup.h"
 
 class MainWindow;
 class ClusterDialog;
@@ -15,6 +16,7 @@ class PeakGroup;
 class EIC;
 class QHistogramSlider;
 class PeakDetector;
+class MultiSelectComboBox;
 
 using namespace std;
 
@@ -41,13 +43,21 @@ public:
   int uploadCount = 0;
 
   enum tableViewType { groupView = 0, peakView = 1 };
-  enum peakTableSelectionType {
+
+  enum PeakTableSubsetType {
       Selected = 0,
-      Whole = 1,
+      All = 1,
       Good = 2,
       Bad = 3,
-      NotBad = 4
+      ExcludeBad = 4,
+      Unmarked = 5,
+      Correlated = 6,
+      Variance = 7,
+      CorrelatedVariance = 8
   };
+
+  static const QMap<PeakGroup::ClassifiedLabel, QString> labelsForLegend();
+  static const QMap<PeakGroup::ClassifiedLabel, QIcon> iconsForLegend();
 
   /**
    * @brief Construct and initialize a TableDockWidget.
@@ -101,6 +111,8 @@ public:
    * @return Targeted group count as integer.
    */
   int getLabeledGroupCount();
+
+  void setLegend(MultiSelectComboBox *legend) { _legend = legend; }
 
   /**
    * @brief Obtain the title of a TableDockWidget, identified by its unique ID.
@@ -170,25 +182,50 @@ public Q_SLOTS:
 
   void showClusterDialog();
 
-  inline void selectedPeakSet() {
-    peakTableSelection = peakTableSelectionType::Selected;
+  inline void selectedPeaks() {
+    peakTableSelection = PeakTableSubsetType::Selected;
   };
 
-  inline void wholePeakSet() {
-    peakTableSelection = peakTableSelectionType::Whole;
+  inline void allPeaks() {
+    peakTableSelection = PeakTableSubsetType::All;
   };
 
-  inline void goodPeakSet() {
-    peakTableSelection = peakTableSelectionType::Good;
+  inline void goodPeaks() {
+    peakTableSelection = PeakTableSubsetType::Good;
   };
 
-  inline void badPeakSet() {
-    peakTableSelection = peakTableSelectionType::Bad;
+  inline void badPeaks() {
+    peakTableSelection = PeakTableSubsetType::Bad;
   };
 
-  inline void excludeBadPeakSet() {
-      peakTableSelection = peakTableSelectionType::NotBad;
+  inline void excludeBadPeaks() {
+      peakTableSelection = PeakTableSubsetType::ExcludeBad;
   };
+
+  inline void unmarkedPeaks() {
+      peakTableSelection = PeakTableSubsetType::Unmarked;
+  };
+
+  /**
+   * @brief Query the peak table for number of peak-groups that belong to each
+   * subset type.
+   * @return Each `PeakTableSubsetType` mapping to the number of peak-groups
+   * that fall within its category.
+   */
+  QMap<PeakTableSubsetType, int> countBySubsets();
+
+  /**
+   * @brief Given a list of subset types, hides all other subsets, disregarding
+   * `All` and `Selected` subset types.
+   * @param subsets A list of subsets whose items will remain visible.
+   */
+  void showOnlySubsets(QList<PeakTableSubsetType> visibleSubsets);
+
+  /**
+   * @brief Filters the tree-view such that only labels selected in the legend
+   * dropdown are visible.
+   */
+  void filterForSelectedLabels();
 
   void exportJson();
   void exportSpectralLib();
@@ -301,6 +338,7 @@ protected Q_SLOTS:
   void contextMenuEvent(QContextMenuEvent *event);
 
 private:
+  MultiSelectComboBox *_legend;
   QPalette pal;
   void addRow(shared_ptr<PeakGroup> group, QTreeWidgetItem *root);
   void heatmapBackground(QTreeWidgetItem *item);
