@@ -248,6 +248,9 @@ HEADERS += stable.h \
            peakeditor.h \
            groupsettingslog.h \
            projectsaveworker.h
+           updatedialog.h 
+           multiselectcombobox.h
+
 
 SOURCES += mainwindow.cpp  \
            database.cpp \
@@ -323,6 +326,8 @@ SOURCES += mainwindow.cpp  \
            peakeditor.cpp \
            groupsettingslog.cpp \
            projectsaveworker.cpp
+           multiselectcombobox.cpp
+
 
 linux {
     SOURCES -= autoupdater.cpp
