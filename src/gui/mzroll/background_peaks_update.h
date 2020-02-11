@@ -108,7 +108,7 @@ public:
                              vector<mzSample*> samples,
                              MavenParameters* mavenParameters);
 
-    void classifyGroups(vector<PeakGroup> &group);
+    void classifyGroups(vector<PeakGroup>& groups);
 
 Q_SIGNALS:
 

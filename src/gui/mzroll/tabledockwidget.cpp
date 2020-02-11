@@ -119,7 +119,11 @@ TableDockWidget::TableDockWidget(MainWindow *mw) {
   connect(treeWidget,
           &QTreeWidget::itemSelectionChanged,
           this,
-          &TableDockWidget::showSelectedGroup);
+          &TableDockWidget::_refreshCycleBuffer);
+          
+  connect(treeWidget,
+          SIGNAL(itemSelectionChanged()),
+          SLOT(showSelectedGroup()));
   connect(treeWidget,
           SIGNAL(itemExpanded(QTreeWidgetItem *)), this,
           SLOT(sortChildrenAscending(QTreeWidgetItem *)));
@@ -142,6 +146,7 @@ TableDockWidget::TableDockWidget(MainWindow *mw) {
   setupFiltersDialog();
 
   setAcceptDrops(true);
+  _cycleInProgress = false;
 }
 
 TableDockWidget::~TableDockWidget() {
@@ -1224,6 +1229,34 @@ TableDockWidget::_peakTableGroupedBySubsets() {
   return itemsBySubset;
 }
 
+void TableDockWidget::_refreshCycleBuffer()
+{
+  if (_cycleInProgress)
+    return;
+
+  auto selectedGroup = getSelectedGroup();
+  if (selectedGroup == nullptr)
+    return;
+
+  _cycleBuffer.clear();
+
+  auto correlatedGroups = selectedGroup->getCorrelatedGroups();
+  QTreeWidgetItemIterator itr(treeWidget);
+  while (*itr) {
+    QTreeWidgetItem *item = (*itr);
+    if (item && item->parent() == nullptr) {
+      QVariant v = item->data(1, Qt::UserRole);
+      PeakGroup *group = v.value<PeakGroup *>();
+      if (group == nullptr)
+        continue;
+
+      if (correlatedGroups.count(group->groupId) || group == selectedGroup)
+        _cycleBuffer.append(item);
+    }
+    ++itr;
+  }
+}
+
 PeakGroup *TableDockWidget::getSelectedGroup() {
   QTreeWidgetItem *item = treeWidget->currentItem();
   if (!item)
@@ -1674,6 +1707,23 @@ void TableDockWidget::keyPressEvent(QKeyEvent *e) {
     }
   } else if (e->key() == Qt::Key_E) {
       editSelectedPeakGroup();
+  } else if (e->key() == Qt::Key_L) {
+    if (item && _cycleBuffer.size() > 1) {
+      int currentIndex = _cycleBuffer.indexOf(item);
+      if (currentIndex != -1) {
+        int nextIndex = 0;
+        if (currentIndex < _cycleBuffer.size() - 1)
+          nextIndex = currentIndex + 1;
+
+        _cycleInProgress = true;
+        QTreeWidgetItem* newItem = _cycleBuffer.at(nextIndex);
+        treeWidget->clearSelection();
+        treeWidget->setCurrentItem(newItem);
+        treeWidget->scrollTo(treeWidget->currentIndex(),
+                             QAbstractItemView::PositionAtCenter);
+        _cycleInProgress = false;
+      }
+    }
   }
   QDockWidget::keyPressEvent(e);
   updateStatus();

@@ -339,6 +339,9 @@ protected Q_SLOTS:
 
 private:
   MultiSelectComboBox *_legend;
+  QList<QTreeWidgetItem*> _cycleBuffer;
+  bool _cycleInProgress;
+
   QPalette pal;
   void addRow(shared_ptr<PeakGroup> group, QTreeWidgetItem *root);
   void heatmapBackground(QTreeWidgetItem *item);
@@ -360,6 +363,9 @@ private:
   peakTableSelectionType peakTableSelection;
   bool tableSelectionFlagUp;
   bool tableSelectionFlagDown;
+
+private slots:
+  void _refreshCycleBuffer();
 };
 
 class PeakTableDockWidget : public TableDockWidget {
