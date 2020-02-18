@@ -143,6 +143,7 @@ win32 {
 INSTALLS += sources target
 
 FORMS = forms/settingsform.ui  \
+        forms/correlationtable.ui \
         forms/librarymanager.ui \
         forms/masscalcwidget.ui \
     #	forms/ligandwidget.ui \
@@ -247,10 +248,10 @@ HEADERS += stable.h \
            updatedialog.h \
            peakeditor.h \
            groupsettingslog.h \
-           projectsaveworker.h
-           updatedialog.h 
-           multiselectcombobox.h
-
+           projectsaveworker.h \
+           updatedialog.h       \
+           multiselectcombobox.h \
+           correlationtable.h
 
 SOURCES += mainwindow.cpp  \
            database.cpp \
@@ -325,9 +326,9 @@ SOURCES += mainwindow.cpp  \
            updatedialog.cpp \
            peakeditor.cpp \
            groupsettingslog.cpp \
-           projectsaveworker.cpp
-           multiselectcombobox.cpp
-
+           projectsaveworker.cpp \
+           multiselectcombobox.cpp \
+           correlationtable.cpp
 
 linux {
     SOURCES -= autoupdater.cpp

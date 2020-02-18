@@ -327,6 +327,8 @@ protected:
   void dropEvent(QDropEvent *event);
   void focusInEvent(QFocusEvent *event);
   void focusOutEvent(QFocusEvent *event);
+  void hideEvent(QHideEvent *event);
+  void showEvent(QShowEvent *event);
 
 Q_SIGNALS:
   void updateProgressBar(QString, int, int, bool = false);
