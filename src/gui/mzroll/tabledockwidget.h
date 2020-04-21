@@ -41,6 +41,8 @@ public:
   int maxPeaks;
   QString uploadId;
   int uploadCount = 0;
+  QList<PeakGroup> allgroups;
+  map<int, pair<string, float>> undoBuffer;
 
   enum tableViewType { groupView = 0, peakView = 1 };
 
@@ -250,6 +252,8 @@ public Q_SLOTS:
    */
   void pdfReadyNotification();
 
+  void undoLabel();
+
   void updateTable();
   void updateItem(QTreeWidgetItem *item, bool updateChildren = true);
   void updateStatus();
@@ -365,6 +369,7 @@ private:
   peakTableSelectionType peakTableSelection;
   bool tableSelectionFlagUp;
   bool tableSelectionFlagDown;
+  QShortcut * ctrlZ;
 
 private slots:
   void _refreshCycleBuffer();
