@@ -46,6 +46,8 @@ PeakDetectionSettings::PeakDetectionSettings(PeakDetectionDialog* dialog):pd(dia
     settings.insert("adductSearchWindow", QVariant::fromValue(pd->adductSearchWindow));
     settings.insert("adductPercentCorrelation", QVariant::fromValue(pd->adductPercentCorrelation));
 
+    //peakMl curation
+    settings.insert("peakMlCuration", QVariant::fromValue(pd->peakMl));
     // fragmentation settings
     settings.insert("matchFragmentation", QVariant::fromValue(pd->matchFragmentationOptions));
     settings.insert("minFragMatchScore", QVariant::fromValue(pd->minFragMatchScore));
@@ -724,6 +726,8 @@ void PeakDetectionDialog::setMavenParameters(QSettings* settings) {
 
         mavenParameters->samples = mainwindow->getSamples();
 
+        if(peakMl->isChecked())
+            mavenParameters->peakMl = true;
         peakupdater->setMavenParameters(mavenParameters);
 
     }

@@ -148,7 +148,6 @@ protected:
 private:
 	string runFunction;
     bool _untargetedMustHaveMs2;
-    bool _classifyPeakGroup;
     string runFunction;
 	MainWindow *mainwindow;
 

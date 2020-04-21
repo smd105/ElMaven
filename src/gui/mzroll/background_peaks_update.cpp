@@ -34,7 +34,6 @@ BackgroundPeakUpdate::BackgroundPeakUpdate(QWidget*) {
         runFunction = "computeKnowsPeaks";
         peakDetector = nullptr;
         setPeakDetector(new PeakDetector());
-        _classifyPeakGroup = true;
 }
 
 BackgroundPeakUpdate::~BackgroundPeakUpdate() {
@@ -140,7 +139,7 @@ void BackgroundPeakUpdate::emitGroups()
 
 void BackgroundPeakUpdate::writeCSVRep(string setName)
 {
-    if (_classifyPeakGroup)
+    if (mavenParameters->peakMl)
         classifyGroups(mavenParameters->allgroups);
 
     for (int j = 0; j < mavenParameters->allgroups.size(); j++) {
