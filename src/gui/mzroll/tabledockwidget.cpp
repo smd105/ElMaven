@@ -229,7 +229,8 @@ void TableDockWidget::setupPeakTable() {
   QStringList colNames;
 
   // Add common coulmns to the Table
-  colNames << "Label"; // TODO: add this column conditionally
+  if(_mainwindow->mavenParameters->peakMl)
+    colNames << "Label";
   colNames << "#";
   colNames << "ID";
   colNames << "Observed m/z";
@@ -248,7 +249,8 @@ void TableDockWidget::setupPeakTable() {
     colNames << "Max Quality";
     colNames << "MS2 Score";
     colNames << "#MS2 Events";
-    colNames << "Probability"; // TODO: add this column conditionally
+    if(_mainwindow->mavenParameters->peakMl)
+        colNames << "Probability";
     colNames << "Rank";
   } else if (viewType == peakView) {
     vector<mzSample *> vsamples = _mainwindow->getVisibleSamples();
@@ -397,7 +399,11 @@ void TableDockWidget::updateCompoundWidget() {
   while (*itr) {
     QTreeWidgetItem *item = (*itr);
     if (item) {
-      QVariant v = item->data(0, Qt::UserRole);
+        QVariant v;
+        if(_mainwindow->mavenParameters->peakMl)
+            v = item->data(1, Qt::UserRole);
+        else
+            v = item->data(0, Qt::UserRole);
       shared_ptr<PeakGroup> group = v.value<shared_ptr<PeakGroup>>();
       if (group == nullptr)
         continue;
@@ -460,46 +466,52 @@ void TableDockWidget::addRow(shared_ptr<PeakGroup> group,
   NumericTreeWidgetItem *item = new NumericTreeWidgetItem(root, 0);
   item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled |
                  Qt::ItemIsDragEnabled);
-  item->setData(1, Qt::UserRole, QVariant::fromValue(group));
+  int columnNumber = 0;
+  if(_mainwindow->mavenParameters->peakMl)
+      columnNumber = 1;
 
-  item->setText(0, QString::number(group->groupId));
-  item->setText(1, QString(group->getName().c_str()));
-  item->setText(2, QString::number(group->meanMz, 'f', 4));
+  item->setData(columnNumber, Qt::UserRole, QVariant::fromValue(group));
+
+  item->setText(columnNumber++, QString::number(group->groupId));
+  item->setText(columnNumber++, QString(group->getName().c_str()));
+  item->setText(columnNumber++, QString::number(group->meanMz, 'f', 4));
+  int charge = _mainwindow->mavenParameters->getCharge(group->getCompound());
 
   int charge = group->parameters()->getCharge(group->getCompound());
   if (group->getExpectedMz(charge) != -1) {
     float mz = group->getExpectedMz(charge);
 
-    item->setText(4, QString::number(mz, 'f', 4));
+    item->setText(columnNumber++, QString::number(mz, 'f', 4));
   } else {
-    item->setText(4, "NA");
+    item->setText(columnNumber++, "NA");
   }
 
-  item->setText(5, QString::number(group->meanRt, 'f', 2));
+  item->setText(columnNumber++, QString::number(group->meanRt, 'f', 2));
 
   if (viewType == groupView) {
     auto expectedRtDiff = group->expectedRtDiff();
     if (expectedRtDiff == -1.0f) {
-      item->setText(6, "NA");
+      item->setText(columnNumber++, "NA");
     } else {
-      item->setText(6, QString::number(expectedRtDiff, 'f', 2));
+      item->setText(columnNumber++, QString::number(expectedRtDiff, 'f', 2));
     }
-    item->setText(7, QString::number(group->sampleCount
+    item->setText(columnNumber++, QString::number(group->sampleCount
                                      + group->blankSampleCount));
-    item->setText(8, QString::number(group->goodPeakCount));
-    item->setText(9, QString::number(group->maxNoNoiseObs));
-    item->setText(10, QString::number(extractMaxIntensity(group), 'g', 3));
-    item->setText(11, QString::number(group->maxSignalBaselineRatio, 'f', 0));
-    item->setText(12, QString::number(group->maxQuality, 'f', 2));
-    item->setText(13, QString::number(group->fragMatchScore.mergedScore, 'f', 2));
-    item->setText(14, QString::number(group->ms2EventCount));
-    item->setText(15, QString::number(group->predictionProbability(), 'f', 3));
-    item->setText(16, QString::number(group->groupRank, 'e', 6));
+    item->setText(columnNumber++, QString::number(group->goodPeakCount));
+    item->setText(columnNumber++, QString::number(group->maxNoNoiseObs));
+    item->setText(columnNumber++, QString::number(extractMaxIntensity(group), 'g', 3));
+    item->setText(columnNumber++, QString::number(group->maxSignalBaselineRatio, 'f', 0));
+    item->setText(columnNumber++, QString::number(group->maxQuality, 'f', 2));
+    item->setText(columnNumber++, QString::number(group->fragMatchScore.mergedScore, 'f', 2));
+    item->setText(columnNumber++, QString::number(group->ms2EventCount));
+    if(_mainwindow->mavenParameters->peakMl)
+        item->setText(columnNumber++, QString::number(group->predictionProbability(), 'f', 3));
+    item->setText(columnNumber++, QString::number(group->groupRank, 'e', 6));
 
     if (group->changeFoldRatio != 0) {
 
-      item->setText(17, QString::number(group->changeFoldRatio, 'f', 2));
-      item->setText(18, QString::number(group->changePValue, 'e', 4));
+      item->setText(columnNumber++, QString::number(group->changeFoldRatio, 'f', 2));
+      item->setText(columnNumber++, QString::number(group->changePValue, 'e', 4));
     }
 
     //Find maximum number of peaks
@@ -522,9 +534,14 @@ void TableDockWidget::addRow(shared_ptr<PeakGroup> group,
     sort(vsamples.begin(), vsamples.end(), mzSample::compSampleOrder);
     vector<float> yvalues = group->getOrderedIntensityVector(
         vsamples, _mainwindow->getUserQuantType());
+
+    if(_mainwindow->mavenParameters->peakMl)
+        columnNumber = 6;
+    else
+        columnNumber = 5;
     for (unsigned int i = 0; i < yvalues.size(); i++) {
 
-      item->setText(6 + i, QString::number(yvalues[i]));
+      item->setText(columnNumber + i, QString::number(yvalues[i]));
     }
     heatmapBackground(item);
   }
@@ -633,11 +650,22 @@ void TableDockWidget::showAllGroups() {
     if (clusterId && group->meanMz > 0 && group->peakCount() > 0) {
       if (!parents.contains(clusterId)) {
         parents[clusterId] = new QTreeWidgetItem(treeWidget);
-        parents[clusterId]->setText(1, QString("Cluster ") +
-                                           QString::number(clusterId));
-        parents[clusterId]->setText(
-            5, QString::number(group->meanRt, 'f', 2));
-        parents[clusterId]->setExpanded(true);
+        if(_mainwindow->mavenParameters->peakMl)
+        {
+            parents[clusterId]->setText(1, QString("Cluster ") +
+                                               QString::number(clusterId));
+            parents[clusterId]->setText(
+                6, QString::number(allgroups[i].meanRt, 'f', 2));
+            parents[clusterId]->setExpanded(true);
+        }
+        else
+        {
+            parents[clusterId]->setText(0, QString("Cluster ") +
+                                               QString::number(clusterId));
+            parents[clusterId]->setText(
+                5, QString::number(allgroups[i].meanRt, 'f', 2));
+            parents[clusterId]->setExpanded(true);
+        }
       }
       QTreeWidgetItem *parent = parents[clusterId];
       addRow(group, parent);
@@ -645,12 +673,14 @@ void TableDockWidget::showAllGroups() {
       addRow(group, NULL);
     }
   }
-
   QScrollBar *vScroll = treeWidget->verticalScrollBar();
   if (vScroll) {
     vScroll->setSliderPosition(vScroll->maximum());
   }
-  sortBy(1);
+  if(_mainwindow->mavenParameters->peakMl)
+    sortBy(1);
+  else
+    sortBy(0);
   treeWidget->setSortingEnabled(true);
   updateStatus();
   updateCompoundWidget();
@@ -2876,27 +2906,30 @@ PeakTableDockWidget::PeakTableDockWidget(MainWindow *mw,
   QWidget *spacer = new QWidget();
   spacer->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
 
-  MultiSelectComboBox *legend = new MultiSelectComboBox(this);
-  legend->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
-  auto labelsForLegend = TableDockWidget::labelsForLegend();
-  auto iconsForLegend = TableDockWidget::iconsForLegend();
-  for (const auto& label : labelsForLegend) {
-    auto type = labelsForLegend.key(label);
-    auto icon = iconsForLegend.value(type);
-    legend->addItem(icon, label);
-  }
-  legend->selectAll();
-  setLegend(legend);
-  connect(legend,
-          &MultiSelectComboBox::selectionChanged,
-          this,
-          &TableDockWidget::filterForSelectedLabels);
+
 
   toolBar->addAction(titlePeakTable);
   toolBar->addSeparator();
-  toolBar->addWidget(new QLabel("Labels"));
-  toolBar->addWidget(legend);
-  toolBar->addSeparator();
+  if(_mainwindow->mavenParameters->peakMl){
+      MultiSelectComboBox *legend = new MultiSelectComboBox(this);
+      legend->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum);
+      auto labelsForLegend = TableDockWidget::labelsForLegend();
+      auto iconsForLegend = TableDockWidget::iconsForLegend();
+      for (const auto& label : labelsForLegend) {
+          auto type = labelsForLegend.key(label);
+          auto icon = iconsForLegend.value(type);
+          legend->addItem(icon, label);
+      }
+      legend->selectAll();
+      setLegend(legend);
+      connect(legend,
+              &MultiSelectComboBox::selectionChanged,
+              this,
+              &TableDockWidget::filterForSelectedLabels);
+        toolBar->addWidget(new QLabel("Labels"));
+        toolBar->addWidget(legend);
+        toolBar->addSeparator();
+  }
   toolBar->addAction(btnSwitchView);
   toolBar->addAction(btnGood);
   toolBar->addAction(btnBad);
