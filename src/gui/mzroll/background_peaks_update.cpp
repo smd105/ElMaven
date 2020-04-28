@@ -139,7 +139,7 @@ void BackgroundPeakUpdate::emitGroups()
 
 void BackgroundPeakUpdate::writeCSVRep(string setName)
 {
-    if (mavenParameters->peakMl)
+    if (mainwindow->mavenParameters->peakMl)
         classifyGroups(mavenParameters->allgroups);
 
     for (int j = 0; j < mavenParameters->allgroups.size(); j++) {

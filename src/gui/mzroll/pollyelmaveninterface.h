@@ -163,6 +163,12 @@ public:
      */
     MainWindow* getMainWindow();
 
+    string userName;
+
+    bool showPollyApps;
+
+    bool loginForPeakMl();
+
 public Q_SLOTS:
 
     /**
@@ -183,6 +189,11 @@ public Q_SLOTS:
 
     void showEPIError(QString errorMessage);
 
+    void emitLoginReady();
+
+    void loginFormClosed();
+
+
 Q_SIGNALS:
 
     /**
@@ -190,6 +201,10 @@ Q_SIGNALS:
      * or otherwise.
      */
     void uploadFinished(bool success);
+
+    void loginResponse();
+
+    void loginUnsuccessful();
 
 private:
 
@@ -296,7 +311,7 @@ private:
     /**
      * @brief This function calls login form UI to take credentials from user.
      */
-    void _callLoginForm();
+    void _callLoginForm(bool showPollyApps);
 
     /**
      * @brief This function calls initial login UI to connect to Polly and fetch
