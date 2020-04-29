@@ -472,7 +472,13 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
 #ifdef Q_OS_WIN
     auto mlBinary = tempDir + QDir::separator() + "moi.exe";
 #endif
-    auto mlModel = tempDir + QDir::separator() + "model.pickle.dat";
+    QString mlModel;
+    if(mainwindow->mavenParameters->peakMlModelType == "Global Model Elucidata"){
+        mlModel = tempDir + QDir::separator() + "model.pickle.dat";
+    }
+    else{
+        return;
+    }
 
     if (!QFile::exists(mlBinary)) {
         cerr << "Error: ML binary not found at path: "

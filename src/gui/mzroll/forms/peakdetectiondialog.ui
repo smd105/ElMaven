@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>795</width>
-    <height>619</height>
+    <height>637</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -794,6 +794,23 @@
            </widget>
           </item>
          </layout>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QCheckBox" name="peakMl">
+         <property name="text">
+          <string>Peak Curation</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QComboBox" name="modelTypes">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="acceptDrops">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
       </layout>
