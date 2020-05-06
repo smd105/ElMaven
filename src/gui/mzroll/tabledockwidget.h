@@ -17,6 +17,7 @@ class EIC;
 class QHistogramSlider;
 class PeakDetector;
 class MultiSelectComboBox;
+class ClassificationWidget;
 
 using namespace std;
 
@@ -29,6 +30,7 @@ public:
   QTreeWidget *treeWidget;
   QLabel *titlePeakTable;
   JSONReports *jsonReports;
+  ClassificationWidget* classificationWidget;
   /**
    * @brief vallgroups will be used by libmaven/jsonReports.cpp
    * @detail For json export. Since libmaven is written only standard

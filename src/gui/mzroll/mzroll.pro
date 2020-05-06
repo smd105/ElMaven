@@ -251,7 +251,8 @@ HEADERS += stable.h \
            projectsaveworker.h \
            updatedialog.h       \
            multiselectcombobox.h \
-           correlationtable.h
+           correlationtable.h   \
+           classificationWidget.h
 
 SOURCES += mainwindow.cpp  \
            database.cpp \
@@ -328,7 +329,8 @@ SOURCES += mainwindow.cpp  \
            groupsettingslog.cpp \
            projectsaveworker.cpp \
            multiselectcombobox.cpp \
-           correlationtable.cpp
+           correlationtable.cpp     \
+           classificationWidget.cpp
 
 linux {
     SOURCES -= autoupdater.cpp
