@@ -1201,8 +1201,9 @@ void MainWindow::setUrl(Reaction* r) {
 	setUrl(url, link);
 }
 
-TableDockWidget* MainWindow::addPeaksTable(const QString& tableTitle) {
-    TableDockWidget* panel = new PeakTableDockWidget(this, tableTitle);
+TableDockWidget* MainWindow::addPeaksTable(const QString& tableTitle, 
+                                           bool hasClassifiedGroups) {
+    TableDockWidget* panel = new PeakTableDockWidget(this, tableTitle, hasClassifiedGroups);
     analytics->hitEvent("New Table", "Peak Table");
 
     addDockWidget(Qt::BottomDockWidgetArea, panel, Qt::Horizontal);

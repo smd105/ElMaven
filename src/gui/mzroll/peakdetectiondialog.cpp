@@ -658,7 +658,8 @@ void PeakDetectionDialog::findPeaks()
                                              "No filter");
     }
 
-    TableDockWidget* peaksTable = mainwindow->addPeaksTable(dbName);
+    TableDockWidget* peaksTable = mainwindow->addPeaksTable(dbName, 
+                                                            mainwindow->mavenParameters->peakMl);
 
     // disconnect prvevious connections
     disconnect(peakupdater, SIGNAL(newPeakGroup(PeakGroup*)), 0, 0);
