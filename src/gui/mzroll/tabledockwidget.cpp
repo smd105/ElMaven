@@ -312,63 +312,16 @@ void TableDockWidget::updateItem(QTreeWidgetItem *item, bool updateChildren) {
 
   heatmapBackground(item);
 
-  //Find maximum number of peaks
-  if (maxPeaks < group->peakCount()) maxPeaks = group->peakCount();
-
-  //score group quality
-  groupClassifier* groupClsf = _mainwindow->getGroupClassifier();
-  if (group->peakCount() > 0 && groupClsf != NULL) {
-      groupClsf->classify(group.get());
-  }
-
-  //get probability good/bad from svm
-  svmPredictor* groupPred = _mainwindow->getSVMPredictor();
-  if (group->peakCount() > 0 && groupPred != NULL) {
-      groupPred->predict(group.get());
-  }
-
-  // Updating the peakid
-  item->setText(0, QString::number(group->groupId));
-  item->setText(1, QString(group->getName().c_str()));
-  item->setText(2, QString::number(group->meanMz, 'f', 4));
-
-  int charge = group->parameters()->getCharge(group->getCompound());
-  if (group->getExpectedMz(charge) != -1) {
-    float mz = group->getExpectedMz(charge);
-    item->setText(3, QString::number(mz, 'f', 4));
-  } else {
-    item->setText(3, "NA");
-  }
-
-  item->setText(4, QString::number(group->meanRt, 'f', 2));
-
-  if (viewType == groupView) {
-    auto expectedRtDiff = group->expectedRtDiff();
-    if (expectedRtDiff == -1.0f) {
-      item->setText(5, "NA");
-    } else {
-      item->setText(5, QString::number(expectedRtDiff, 'f', 2));
-    }
-    item->setText(6, QString::number(group->sampleCount
-                                     + group->blankSampleCount));
-    item->setText(7, QString::number(group->goodPeakCount));
-    item->setText(8, QString::number(group->maxNoNoiseObs));
-    item->setText(9, QString::number(extractMaxIntensity(group.get()), 'g', 3));
-    item->setText(10, QString::number(group->maxSignalBaselineRatio, 'f', 0));
-    item->setText(11, QString::number(group->maxQuality, 'f', 2));
-    item->setText(12, QString::number(group->fragMatchScore.mergedScore, 'f', 2));
-    item->setText(13, QString::number(group->ms2EventCount));
-    item->setText(14, QString::number(group->groupRank, 'e', 6));
-
-    if (fabs(group->changeFoldRatio) >= 0) {
-      item->setText(15, QString::number(group->changeFoldRatio, 'f', 3));
-      item->setText(16, QString::number(group->changePValue, 'f', 6));
-    }
-  }
-  if (viewType == groupView)
+  if (viewType == groupView && _mainwindow->mavenParameters->peakMl)
+  {
     item->setText(12, QString::number(group->maxQuality, 'f', 2));
-
-  item->setText(2, QString(group->getName().c_str()));
+    item->setText(2, QString(group->getName().c_str()));
+  }
+  else if (viewType == groupView)
+  {
+      item->setText(11, QString::number(group->maxQuality, 'f', 2));
+      item->setText(1, QString(group->getName().c_str()));
+  }
 
   item->setIcon(0, iconsForLegend()[group->predictedLabel()]);
   QString castLabel =
@@ -406,8 +359,10 @@ void TableDockWidget::updateCompoundWidget() {
         else
             v = item->data(0, Qt::UserRole);
       shared_ptr<PeakGroup> group = v.value<shared_ptr<PeakGroup>>();
-      if (group == nullptr)
-        continue;
+      if (group == nullptr){
+          itr++;
+          continue;
+      }
       _mainwindow->ligandWidget->markAsDone(group->getCompound());
     }
     ++itr;
@@ -471,7 +426,7 @@ void TableDockWidget::addRow(shared_ptr<PeakGroup> group,
   if(_mainwindow->mavenParameters->peakMl)
       columnNumber = 1;
 
-  item->setData(columnNumber, Qt::UserRole, QVariant::fromValue(group));
+  item->setData(1, Qt::UserRole, QVariant::fromValue(group));
 
   item->setText(columnNumber++, QString::number(group->groupId));
   item->setText(columnNumber++, QString(group->getName().c_str()));
@@ -678,10 +633,7 @@ void TableDockWidget::showAllGroups() {
   if (vScroll) {
     vScroll->setSliderPosition(vScroll->maximum());
   }
-  if(_mainwindow->mavenParameters->peakMl)
-    sortBy(1);
-  else
-    sortBy(0);
+
   treeWidget->setSortingEnabled(true);
   updateStatus();
   updateCompoundWidget();
@@ -1612,12 +1564,16 @@ void TableDockWidget::showConsensusSpectra() {
 void TableDockWidget::markGroupGood() {
 
   auto currentGroups = getSelectedGroups();
-  for(auto group : currentGroups)
+
+  if(_mainwindow->mavenParameters->peakMl)
   {
-    auto label = group->labelToString(group->predictedLabel());
-    auto probability = group->predictionProbability();
-    pair<string, float> groupLabel = make_pair(label, probability);
-    undoBuffer[group->groupId] = groupLabel;
+      for(auto group : currentGroups)
+      {
+          auto label = group->labelToString(group->predictedLabel());
+          auto probability = group->predictionProbability();
+          pair<string, float> groupLabel = make_pair(label, probability);
+          undoBuffer[group->groupId] = groupLabel;
+      }
   }
   setGroupLabel('g');
 
