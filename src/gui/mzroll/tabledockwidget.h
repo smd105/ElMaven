@@ -18,6 +18,7 @@ class QHistogramSlider;
 class PeakDetector;
 class MultiSelectComboBox;
 class ClassificationWidget;
+class CorrelationTable;
 
 using namespace std;
 
@@ -186,6 +187,8 @@ public Q_SLOTS:
   void exportJsonToPolly(QString writableTempDir, QString jsonfileName, bool addMLInfo);
 
   void showClusterDialog();
+
+  void displayNextGroupInCorrelationTable(int groupId);
 
   inline void selectedPeaks() {
     peakTableSelection = PeakTableSubsetType::Selected;
