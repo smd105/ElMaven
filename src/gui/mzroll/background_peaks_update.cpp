@@ -8,6 +8,9 @@
 #include <QProcess>
 #include <QJsonObject>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include "Compound.h"
 #include "adductdetection.h"
 #include "alignmentdialog.h"
@@ -26,6 +29,11 @@
 #include "PeakDetector.h"
 #include "samplertwidget.h"
 #include "EIC.h"
+#include "base64.h"
+#include "notificator.h"
+
+#define _STR(X) #X
+#define STR(X) _STR(X)
 
 BackgroundPeakUpdate::BackgroundPeakUpdate(QWidget*) {
         mainwindow = NULL;
@@ -455,7 +463,6 @@ void BackgroundPeakUpdate::updateGroups(QList<shared_ptr<PeakGroup>> groups,
 
 void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
 {
-    Q_EMIT(updateProgressBar("Classifying peaks…", 0, 0));
     if (groups.empty())
         return;
 
@@ -480,18 +487,29 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
         return;
     }
 
+    if (!QFile::exists(mlBinary) || !QFile::exists(mlModel))
+        configure();
+
     if (!QFile::exists(mlBinary)) {
-        cerr << "Error: ML binary not found at path: "
-             << mlBinary.toStdString()
-             << endl;
-        return;
+        bool downloadSuccess = downloadPeakMlFilesFromAws("moi");
+        if(!downloadSuccess) {
+            cerr << "Error: ML binary not found at path: "
+                << mlBinary.toStdString()
+                << endl;
+            return;
+        }
     }
     if (!QFile::exists(mlModel)) {
-        cerr << "Error: ML model not found at path: "
-             << mlModel.toStdString()
-             << endl;
-        return;
+        bool downloadSuccess = downloadPeakMlFilesFromAws("model.pickle.dat");
+        if(!downloadSuccess) {
+            cerr << "Error: ML model not found at path: "
+                << mlModel.toStdString()
+                << endl;
+            return;
+        }
     }
+
+    Q_EMIT(updateProgressBar("Classifying peaks…", 0, 0));
 
     QString peakAttributesFile = tempDir
                                  + QDir::separator()
@@ -642,3 +660,203 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
             group.addCorrelatedGroup(elem.first, elem.second);
     }
 }
+
+bool BackgroundPeakUpdate::downloadPeakMlFilesFromAws(QString fileName)
+{
+    Q_EMIT(updateProgressBar("Downloading Files..", 0, 0));
+
+    QProcess process;
+    QStringList args;
+
+    args << "s3"; 
+    args << "cp";
+    
+    auto tempDir = QStandardPaths::writableLocation(
+                            QStandardPaths::GenericConfigLocation)
+                            + QDir::separator()
+                            + "ElMaven";
+
+    if(fileName == "moi")
+    {
+        #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+            args << "s3://kyah/mac/moi";
+        #endif
+        #ifdef Q_OS_WIN
+            args << "s3://kyah/windows/moi.exe";
+        #endif
+    } else {
+        args << "s3://kyah/model/model.pickle.dat";
+    }
+
+    args << tempDir;
+
+    QString awsPath = "";
+    #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+        
+        awsPath = "bin/aws-cli/aws";
+    #endif
+    #ifdef Q_OS_WIN
+        awsPath = "bin/aws-cli/aws.exe";
+    #endif
+
+    if (!QFile::exists(awsPath))
+        return false;
+
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+
+    process.setProcessEnvironment(env);
+    process.setProgram(awsPath);
+    process.setArguments(args);
+    process.start();
+    process.waitForFinished(-1);
+    qDebug() << "Downloading" << fileName << qPrintable(process.readAllStandardError());
+    
+    auto status = process.exitStatus();
+
+    if (status){
+        
+        qDebug() << "Crash Exit";
+        QIcon icon = QIcon("");
+        QString title("Slow Internet Connection");
+        QString message("Could not download needed files. Please try again later");
+
+        Notificator* fluxomicsPrompt = Notificator::showMessage(icon,
+                                                                title,
+                                                                message);
+        return false;
+    }
+    
+    if(fileName == "moi")
+    {
+        #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+            tempDir = tempDir + QDir::separator() + "moi";
+        #endif
+        #ifdef Q_OS_WIN
+            tempDir = tempDir + QDir::separator() + "moi.exe";
+        #endif
+    } else {
+        tempDir = tempDir + QDir::separator() + "model.pickle.dat";
+    }
+
+    if (!QFile::exists(tempDir)) {
+        return false;
+    } else {
+        string fileName = tempDir.toStdString();
+        changeMode(fileName);
+        return true;
+    }
+
+}
+
+void BackgroundPeakUpdate::configure()
+{
+    QProcess process;
+    QStringList args;
+
+    Q_EMIT(updateProgressBar("Configuring..", 0, 0));
+
+    //getting access and secret keys.
+    #ifndef PEAKML_AWS_ACCESS_KEY_BASE64
+        return;
+    #endif
+        string awsAccessKey = STR(PEAKML_AWS_ACCESS_KEY_BASE64);
+        awsAccessKey = base64::decodeString(awsAccessKey.c_str(),
+                                            awsAccessKey.size());
+    #ifdef __OSX_AVAILABLE
+        // remove attached newline at the end
+        awsAccessKey = awsAccessKey.substr(0, awsAccessKey.size() - 1);
+    #endif
+        QString accessKey = QString::fromStdString(awsAccessKey);
+
+
+    #ifndef PEAKML_AWS_SECRET_KEY_BASE64
+        return;
+    #endif
+        string awsSecretKey = STR(PEAKML_AWS_SECRET_KEY_BASE64);
+        awsSecretKey = base64::decodeString(awsSecretKey.c_str(),
+                                            awsSecretKey.size());
+    #ifdef __OSX_AVAILABLE
+        // remove attached newline at the end
+        awsSecretKey = awsSecretKey.substr(0, awsSecretKey.size() - 1);
+    #endif
+        QString secretKey = QString::fromStdString(awsSecretKey);
+
+
+    //Setting Profile
+    args << "configure"; 
+    args << "set";
+    args << "profile";
+    args << "default";
+
+    QString awsPath = "";
+    #if defined(Q_OS_MAC) || defined(Q_OS_LINUX)
+        awsPath = "bin/aws-cli/aws";
+    #endif
+    #ifdef Q_OS_WIN
+        awsPath = "bin/aws-cli/aws.exe";
+    #endif
+
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+
+    process.setProcessEnvironment(env);
+    process.setProgram(awsPath);
+    process.setArguments(args);
+    process.start();
+    process.waitForFinished(-1);
+    qDebug() << "Setting Profiile" << qPrintable(process.readAllStandardError());
+
+    Q_EMIT(updateProgressBar("Configuring..", 3, 10));
+
+    //Setting Region
+    args.clear();
+    args << "configure"; 
+    args << "set";
+    args << "default.region";
+    args << "us-east-2";
+
+    process.setProcessEnvironment(env);
+    process.setProgram(awsPath);
+    process.setArguments(args);
+    process.start();
+    process.waitForFinished(-1);
+    qDebug() << "Setting Region" << qPrintable(process.readAllStandardError());
+
+    Q_EMIT(updateProgressBar("Configuring..", 6, 10));
+    //Setting Access key
+    args.clear();
+    args << "configure"; 
+    args << "set";
+    args << "aws_access_key_id";
+    args << accessKey;
+
+    process.setProcessEnvironment(env);
+    process.setProgram(awsPath);
+    process.setArguments(args);
+    process.start();
+    process.waitForFinished(-1);
+    qDebug() << "Setting Access key" << qPrintable(process.readAllStandardError());
+
+    Q_EMIT(updateProgressBar("Configuring..", 9, 10));
+    
+    //Setting Secret key
+    args.clear();
+    args << "configure"; 
+    args << "set";
+    args << "aws_secret_access_key";
+    args << secretKey;
+
+    process.setProcessEnvironment(env);
+    process.setProgram(awsPath);
+    process.setArguments(args);
+    process.start();
+    process.waitForFinished(-1);
+    qDebug() << "Setting Secret key" << qPrintable(process.readAllStandardError());
+    Q_EMIT(updateProgressBar("Configuring..", 10, 10));
+
+}
+
+void BackgroundPeakUpdate::changeMode(string fileName)
+{
+    chmod(fileName.c_str(), S_IRWXU);
+}
+

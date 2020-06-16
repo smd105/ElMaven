@@ -225,6 +225,25 @@ private:
 	 */
 	bool covertToMzXML(QString filename, QString outfile);
 
+	/**
+	 * @brief Downloads binary and model from S3 bucket 
+	 * if the two files does not exist on user's pc. 
+	 * @param filename Tells the file either model or 
+	 * binary to be downloaded. 
+	 */ 
+	bool downloadPeakMlFilesFromAws(QString fileName);
+
+	/**
+	 * @brief Configure aws access key and secret key in order to 
+	 * access peakml bucket.
+	 */
+	void configure();
+
+	/**
+	 * @brief Changes the mode of the file and gives it executable rights. 
+	 * Used to give downloaded moi file the execute rights. 
+	 */
+	void changeMode(string fileName);
 
 
 private:
