@@ -1,8 +1,12 @@
 #ifndef BACKGROUND_PEAK_UPDATE_H
 #define BACKGROUND_PEAK_UPDATE_H
 
+#include <common/downloadmanager.h>
+#include <common/logger.h>
+
 #include "PeakGroup.h"
 #include "stable.h"
+#include "pollyintegration.h"
 
 class MainWindow;
 class Database;
@@ -13,6 +17,7 @@ class MavenParameters;
 class PeakDetector;
 class Compound;
 class mzSlice;
+class PollyIntegration;
 
 /**
  * @class BackgroundPeakUpdate
@@ -232,13 +237,7 @@ private:
 	 * binary to be downloaded. 
 	 */ 
 	bool downloadPeakMlFilesFromAws(QString fileName);
-
-	/**
-	 * @brief Configure aws access key and secret key in order to 
-	 * access peakml bucket.
-	 */
-	void configure();
-
+	
 	/**
 	 * @brief Changes the mode of the file and gives it executable rights. 
 	 * Used to give downloaded moi file the execute rights. 
@@ -248,6 +247,8 @@ private:
 
 private:
 	volatile bool _stopped;
+	DownloadManager *_dlManager;
+	PollyIntegration *_pollyIntegration;
 
 };
 
