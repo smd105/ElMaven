@@ -244,6 +244,12 @@ private:
 	 */
 	void changeMode(string fileName);
 
+	/**
+	 * @brief Remove peakML files- model and CSV files for input and output
+	 * from user's system
+	 */
+	void removeFiles();
+
 
 private:
 	volatile bool _stopped;

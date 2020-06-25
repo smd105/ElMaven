@@ -9,6 +9,7 @@
 #include <QJsonObject>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "Compound.h"
 #include "adductdetection.h"
@@ -654,6 +655,8 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
         for (auto& elem : group_correlations)
             group.addCorrelatedGroup(elem.first, elem.second);
     }
+
+    removeFiles();
 }
 
 bool BackgroundPeakUpdate::downloadPeakMlFilesFromAws(QString fileName)
@@ -710,3 +713,41 @@ void BackgroundPeakUpdate::changeMode(string fileName)
     system(command.c_str());
 }
 
+void BackgroundPeakUpdate::removeFiles()
+{
+    auto tempDir = QStandardPaths::writableLocation(
+                   QStandardPaths::GenericConfigLocation)
+                   + QDir::separator()
+                   + "ElMaven" 
+                   + QDir::separator()
+                   + "model.pickle.dat";
+    
+    string fileName = tempDir.toStdString();
+
+    if (QFile::exists(tempDir))
+        remove(fileName.c_str());
+
+    tempDir.clear();
+    tempDir = QStandardPaths::writableLocation(
+                   QStandardPaths::GenericConfigLocation)
+                   + QDir::separator()
+                   + "ElMaven" 
+                   + QDir::separator()
+                   + "peak_ml_input.csv";
+    fileName = tempDir.toStdString();
+
+    if (QFile::exists(tempDir))
+        remove(fileName.c_str());
+
+    tempDir.clear();
+    tempDir = QStandardPaths::writableLocation(
+                   QStandardPaths::GenericConfigLocation)
+                   + QDir::separator()
+                   + "ElMaven" 
+                   + QDir::separator()
+                   + "peak_ml_output.csv";
+    fileName = tempDir.toStdString();
+
+    if (QFile::exists(tempDir))
+        remove(fileName.c_str());
+}
