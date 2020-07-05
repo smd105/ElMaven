@@ -18,13 +18,15 @@ ClassificationWidget::ClassificationWidget(TableDockWidget *tabledock)
     _group = _tableDock->getSelectedGroup();
     _sumNegativeWeights = 0;
     _sumPositiveWeights = 0;
+    _totalArrowCount = 0;
+    initialiseLabelName();
 }
 
 void ClassificationWidget::showClassification()
 {
     _layout->addWidget(_sceneView);
     _inferenceVisual->setLayout(_layout);
-    _inferenceVisual->resize(QSize(900, 400));
+    _inferenceVisual->resize(QSize(1000, 400));
     _inferenceVisual->setWindowTitle("Classification inference");
 
     setTitle();
@@ -59,31 +61,49 @@ void ClassificationWidget::showClassification()
          it != predictionInference.end() && counter <  5;
          ++it)
     {
+        _totalArrowCount++;
         if (counter == 0){
             minNegative = it->first;
-            startPosition = makeArrowForNegatives(it->first, it->second, counter, startPosition);
+            startPosition = makeArrowForNegatives(it->first, 
+                                                  it->second, 
+                                                  counter, 
+                                                  startPosition);
         }
         else
-            startPosition = makeArrowForNegatives(it->first, it->second, counter, startPosition + 4);
+            startPosition = makeArrowForNegatives(it->first, 
+                                                  it->second, 
+                                                  counter, 
+                                                  startPosition + 4);
         if(counter == 4)
             maxNegative = it->first;
         counter++;
     }
 
-    plotAxes(0, _scene.width() - 500, startPosition, minNegative, maxNegative);
+    plotAxes(0, _scene.width() - 500, 
+            startPosition, 
+            minNegative,
+            maxNegative);
+
     float startPositive = startPosition;
     counter = 0;
     //making right side arrows with positives
     for (auto it = predictionInference.rbegin();
          it != predictionInference.rend() && counter < 5;
          ++it)
-    {
+    {   
+        _totalArrowCount++;
         if(counter == 0){
             maxPositive = it->first;
-            startPosition = makeArrowForPositives(it->first, it->second, counter, startPosition);
+            startPosition = makeArrowForPositives(it->first, 
+                                                  it->second, 
+                                                  counter, 
+                                                  startPosition);
         }
         else
-            startPosition = makeArrowForPositives(it->first, it->second, counter, startPosition + 4);
+            startPosition = makeArrowForPositives(it->first, 
+                                                  it->second, 
+                                                  counter, 
+                                                  startPosition + 4);
         if(counter == 4)
             minPositive = it->first;
         counter++;
@@ -119,7 +139,10 @@ void ClassificationWidget::plotAxes(int type, float startX, float endX, float mi
         text = _scene.addText(value, font);
         text->setPos(endX - 25 , 135);
 
-        line = _scene.addLine(startX + (endX - startX)/2, 130 - 5, startX + (endX - startX)/2, 130 + 5, pen);
+        line = _scene.addLine(startX + (endX - startX)/2, 130 - 5, 
+                              startX + (endX - startX)/2, 130 + 5, 
+                              pen);
+
         val = mzUtils::float2string((max + min) /2, 2);
         value = QString(val.c_str());
         text = _scene.addText(value, font);
@@ -128,7 +151,10 @@ void ClassificationWidget::plotAxes(int type, float startX, float endX, float mi
 
         auto line = _scene.addLine(startX, 130, endX, 130, pen);
 
-        line  = _scene.addLine(startX + 30, 130 - 5, startX+30, 130 + 5, pen);
+        line  = _scene.addLine(startX + 30, 130 - 5, 
+                               startX+30, 130 + 5, 
+                               pen);
+
         string val = mzUtils::float2string(max, 2);
         QString value = QString(val.c_str());
         auto text = _scene.addText(value, font);
@@ -143,7 +169,10 @@ void ClassificationWidget::plotAxes(int type, float startX, float endX, float mi
 
 }
 
-int ClassificationWidget::makeArrowForNegatives(float width, string label, int counter, int startPosition)
+int ClassificationWidget::makeArrowForNegatives(float width, 
+                                                string label, 
+                                                int counter, 
+                                                int startPosition)
 {
     QPen pen;
     pen.setWidth(1);
@@ -200,11 +229,11 @@ int ClassificationWidget::makeArrowForNegatives(float width, string label, int c
     Linepen.setWidth(2);
     Linepen.setColor(color);
     auto line = _scene.addLine(QLineF(startPosition + x_displacement/2 ,190,
-                                      startPosition + x_displacement/2 - 70 ,
+                                      startPosition + x_displacement/2 - 150 - counter * 10 ,
                                       220),
                                Linepen);
-    line = _scene.addLine(QLineF(startPosition + x_displacement/2 - 70,
-                                 220, startPosition + x_displacement/2 - 70 ,
+    line = _scene.addLine(QLineF(startPosition + x_displacement/2 - 150 - counter * 10,
+                                 220, startPosition + x_displacement/2 - 150 - counter * 10,
                                  250 + (4 - counter) * 10),
                           Linepen);
     label += " = ";
@@ -219,14 +248,29 @@ int ClassificationWidget::makeArrowForNegatives(float width, string label, int c
         pxSize = 8;
     font.setPixelSize(pxSize);
 
+    vector<string> featureSplit;
+    mzUtils::splitNew(featureText.toStdString(),
+                      " =",
+                      featureSplit);
+
+    auto changedLabel = _changedLabelName[featureSplit[0]];
+    changedLabel += " ";
+    changedLabel += featureSplit[1];
+    changedLabel += " ";
+    changedLabel += featureSplit[2];
+    featureText = QString::fromStdString(changedLabel);
+
     QGraphicsTextItem* title = _scene.addText(featureText, font);
     title->setHtml(featureText);
-    title->setPos(startPosition - 70, 250 + (4 - counter) * 10);
-
+    title->setPos(startPosition - 150 - counter * 10, 250 + (4 - counter) * 10);
+    
     return (startPosition + x_displacement);
 }
 
-int ClassificationWidget::makeArrowForPositives(float width, string label, int counter, int startPosition)
+int ClassificationWidget::makeArrowForPositives(float width, 
+                                                string label, 
+                                                int counter, 
+                                                int startPosition)
 {
     QPen pen;
     pen.setWidth(1);
@@ -276,11 +320,11 @@ int ClassificationWidget::makeArrowForPositives(float width, string label, int c
     Linepen.setWidth(2);
     Linepen.setColor(color);
     auto line = _scene.addLine(QLineF(startPosition + x_displacement/2, 190,
-                                      startPosition +x_displacement/2 + 70 ,
+                                      startPosition +x_displacement/2 + 170 ,
                                       220),
                                Linepen);
-    line = _scene.addLine(QLineF(startPosition + x_displacement/2 + 70,
-                                 220, startPosition + x_displacement/2 + 70 ,
+    line = _scene.addLine(QLineF(startPosition + x_displacement/2 + 170,
+                                 220, startPosition + x_displacement/2 + 170 ,
                                  250 + counter * 10),
                           Linepen);
     label += " = ";
@@ -294,13 +338,27 @@ int ClassificationWidget::makeArrowForPositives(float width, string label, int c
         pxSize = 8;
     font.setPixelSize(pxSize);
 
+    vector<string> featureSplit;
+    mzUtils::splitNew(featureText.toStdString(),
+                      " =",
+                      featureSplit);
+
+    auto changedLabel = _changedLabelName[featureSplit[0]];
+    changedLabel += " ";
+    changedLabel += featureSplit[1];
+    changedLabel += " ";
+    changedLabel += featureSplit[2];
+    featureText = QString::fromStdString(changedLabel);
+
     QGraphicsTextItem* title = _scene.addText(featureText, font);
     title->setHtml(featureText);
 
-    if(peakFeature.size() < 25)
-        title->setPos(startPosition +x_displacement - 10, 250 + counter * 10);
+    if (featureText.size() < 30)
+        title->setPos(startPosition + x_displacement + 65, 250 + counter * 10);
+    else if (featureText.size() < 60)
+        title->setPos(startPosition + x_displacement + 25, 250 + counter * 10);
     else
-        title->setPos(startPosition +x_displacement - 40, 250 + counter * 10);
+        title->setPos(startPosition + x_displacement - changedLabel.size(), 250 + counter * 10);
 
     return (startPosition + x_displacement);
 }
@@ -332,3 +390,94 @@ void ClassificationWidget::setTitle()
     title->update();
 }
 
+void ClassificationWidget::initialiseLabelName()
+{
+    _changedLabelName["SIGNAL_BASELINE_MEAN"] = "Mean of signal to baseline ratio";
+    _changedLabelName["SIGNAL_BASELINE_STD"] = "Std of  signal to baseline ratio";
+    _changedLabelName["SIGNAL_BASELINE_MIN"] = "Minimum signal to baseline ratio";
+    _changedLabelName["SIGNAL_BASELINE_MAX"] = "Maximum signal to baseline ratio";
+    _changedLabelName["SIGNAL_BASELINE_SIML"] = "Signal to baseline ratio similarity in peak-group";
+    _changedLabelName["SIGNAL_BASELINE_AL1"] = "At least 1 good signal to baseline ratio";
+    _changedLabelName["SYMMETRY_MEAN"] = "Mean of Peak-group’s symmetry";
+    _changedLabelName["SYMMETRY_STD"] = "Std of symmetry in peak-groups";
+    _changedLabelName["SYMMETRY_MIN"] = "Minimum symmetry value in peak-groups";
+    _changedLabelName["SYMMETRY_MAX"] = "Maximum symmetry value in peak-groups";
+    _changedLabelName["SYMMETRY_SIML"] = "Symmetries Similarity in peakgroup";
+    _changedLabelName["SYMMETRY_AL1"] = "At least 1 good symmetric value";
+    _changedLabelName["PEAK_WIDTH_MEAN"] = "Mean of peaks’ width";
+    _changedLabelName["PEAK_WIDTH_STD"] = "Std of peaks’ width";
+    _changedLabelName["PEAK_WIDTH_MIN"] = "Minimum peak width";
+    _changedLabelName["PEAK_WIDTH_MAX"] = "Maximum peak width";
+    _changedLabelName["PEAK_WIDTH_SIML"] = "Peaks’ width similarity in peakgroup";
+    _changedLabelName["PEAK_WIDTH_AL1"] = "At least 1 good peak width value";
+    _changedLabelName["PEAK_AREA_MEAN"] = "Mean of peak area";
+    _changedLabelName["PEAK_AREA_STD"] = "Std of peak area";
+    _changedLabelName["PEAK_AREA_MIN"] = "Minimum peak area";
+    _changedLabelName["PEAK_AREA_MAX"] = "Maximum peak area";
+    _changedLabelName["PEAK_AREA_SIML"] = "Peak areas similarity in peakgroup";
+    _changedLabelName["PEAK_AREA_AL1"] = "At least 1 good peak area value";
+    _changedLabelName["PEAK_GAUSS_FIT_R2_MEAN"] = "Mean of peak gaussian fit R2";
+    _changedLabelName["PEAK_GAUSS_FIT_R2_STD"] = "Std of peak gaussian fit R2";
+    _changedLabelName["PEAK_GAUSS_FIT_R2_MIN"] = "Minimum gaussian fit R2 value";
+    _changedLabelName["PEAK_GAUSS_FIT_R2_MAX"] = "Maximum gaussian fit R2 value";
+    _changedLabelName["PEAK_GAUSS_FIT_R2_SIML"] = "Gaussian fit R2 similarity in peakgroup";
+    _changedLabelName["PEAK_GAUSS_FIT_R2_AL1"] = "At least 1 good gaussian fit R2 value";
+    _changedLabelName["PEAK_INTENSITY_MEAN"] = "Mean of peak intensity";
+    _changedLabelName["PEAK_INTENSITY_STD"]  = "Std of peak intensity";
+    _changedLabelName["PEAK_INTENSITY_MIN"] = "Minimum peak intensity";
+    _changedLabelName["PEAK_INTENSITY_MAX"] = "Maximum peak intensity";
+    _changedLabelName["PEAK_INTENSITY_SIML"] = "Peak intensity similarity in peakgroup";
+    _changedLabelName["PEAK_INTENSITY_AL1"] = "At least 1 good peak intensity value";
+    _changedLabelName["NO_NOISE_MEAN"] = "Mean of no noise";
+    _changedLabelName["NO_NOISE_STD"] = "Std of no noise";
+    _changedLabelName["NO_NOISE_MIN"] = "Minimum no noise value";
+    _changedLabelName["NO_NOISE_MAX"] = "Maximum no noise value";
+    _changedLabelName["NO_NOISE_SIML"] = "No noise similarity in peakgroup";
+    _changedLabelName["NO_NOISE_AL1"] = "At least 1 good no noise value";
+    _changedLabelName["RT_STD"] = "Std of retention time";
+    _changedLabelName["RT_SIML"] = "Retention time similarity in peakgroup";
+    _changedLabelName["QUALITY_MEAN"] = "Mean of peakgroup quality";
+    _changedLabelName["QUALITY_STD"] = "Std of peakgroup quality";
+    _changedLabelName["QUALITY_MIN"] = "Minimum peakgroup quality";
+    _changedLabelName["QUALITY_MAX"] = "Maximum peakgroup quality";
+    _changedLabelName["QUALITY_SIML"] = "Quality similarity in peakgroup";
+    _changedLabelName["QUALITY_AL1"] = "At least 1 good quality value";
+    _changedLabelName["PeakQuality_mean_cohort_mean"] = "Mean of peakquality mean cohort";
+    _changedLabelName["PeakQuality_mean_cohort_std"] = "Std of peakquality mean cohort";
+    _changedLabelName["PeakQuality_mean_cohort_min"] = "Minimum peakquality mean cohort";
+    _changedLabelName["PeakQuality_mean_cohort_max"] = "Maximum peakquality mean cohort";
+    _changedLabelName["PeakQuality_mean_cohort_SIML"] = "Peakquality mean cohort similarity in peakgrpup";
+    _changedLabelName["PeakQuality_mean_cohort_AL1"] = "Atleast 1 good peakquality mean cohort";
+    _changedLabelName["RT_OVERLAP_COHORT_MEAN"] = "Mean of retention time overlap cohort";
+    _changedLabelName["RT_OVERLAP_COHORT_STD"] = "Std of retention time overlap cohort";
+    _changedLabelName["RT_OVERLAP_COHORT_MIN"] = "Minimum retention time overlap cohort value";
+    _changedLabelName["RT_OVERLAP_COHORT_MAX"] = "Maximum retention time overlap cohort value";
+    _changedLabelName["RT_OVERLAP_COHORT_SIML"] = "Retention time overlap cohort similarity in peakgroup";
+    _changedLabelName["RT_OVERLAP_COHORT_AL1"] = "At least 1 good retention time overlap cohort";
+    _changedLabelName["RT_MEAN_COHORT_STD"] = "Std of retention time mean cohort";
+    _changedLabelName["RT_MEAN_COHORT_SIML"] = "Retention time mean cohort similarity in peakgroup";
+    _changedLabelName["RT_STDDEV_COHORT_MEAN"] = "mean of retention time std cohort";
+    _changedLabelName["RT_STDDEV_COHORT_STD"] = "Std of retention time std cohort";
+    _changedLabelName["RT_STDDEV_COHORT_MIN"] = "Minimum retention time std cohort";
+    _changedLabelName["RT_STDDEV_COHORT_MAX"] = "Maximum retention time std cohort";
+    _changedLabelName["RT_STDDEV_COHORT_SIML"] = "Retention time std cohort similarity in peakgroup";
+    _changedLabelName["RT_STDDEV_COHORT_AL1"] = "At least 1 good retention time std cohort value";
+    _changedLabelName["PEAK_INTENSITY_STDDEV_COHORT_MEAN"] = "Mean of peak intensity std cohort";
+    _changedLabelName["PEAK_INTENSITY_STDDEV_COHORT_STD"] = "Std of peak intensity std cohort";
+    _changedLabelName["PEAK_INTENSITY_STDDEV_COHORT_MIN"] = "Minimum peak intensity std cohort value";
+    _changedLabelName["PEAK_INTENSITY_STDDEV_COHORT_MAX"] = "Maximum peak intensity std cohort value";
+    _changedLabelName["PEAK_INTENSITY_STDDEV_COHORT_SIML"] = "Peak intensity std cohort similarity in peakgroup";
+    _changedLabelName["PEAK_INTENSITY_STDDEV_COHORT_AL1"] = "At least 1 good peak intensity std cohort value";
+    _changedLabelName["PEAK_INTENSITY_SIML_COHORT_MEAN"] = "Mean of peak intensity similarity cohort mean";
+    _changedLabelName["PEAK_INTENSITY_SIML_COHORT_STD"] = "Std of peak intensity similarity cohort mean";
+    _changedLabelName["PEAK_INTENSITY_SIML_COHORT_MIN"] = "Minimum peak intensity similarity cohort mean";
+    _changedLabelName["PEAK_INTENSITY_SIML_COHORT_MAX"] = "Maximum peak intensity similarity cohort mean";
+    _changedLabelName["PEAK_INTENSITY_SIML_COHORT_SIML"] = "Peak intensity similarity cohort mean similarity in peakgroup";
+    _changedLabelName["PEAK_INTENSITY_SIML_COHORT_AL1"] = "At least 1 good peak intensity similarity cohort mean";
+    _changedLabelName["RT_DEVIATION_COHORT_MEAN"] = "Mean of retention time deviation cohort mean";
+    _changedLabelName["RT_DEVIATION_COHORT_STD"] = "Std of retention time deviation cohort mean";
+    _changedLabelName["RT_DEVIATION_COHORT_MIN"] = "Minimum retention time deviation cohort mean";
+    _changedLabelName["RT_DEVIATION_COHORT_MAX"] = "Maximum of retention time deviation cohort mean";
+    _changedLabelName["RT_DEVIATION_COHORT_SIML"] = "Retention time deviation cohort mean similarity in peakgroup";
+    _changedLabelName["PEAK_INTENSITY_SIML_COHORT_AL1"] = "At least 1 good retention time deviation cohort mean";
+}
