@@ -2,7 +2,6 @@
 
 #include <QHistogramSlider.h>
 #include <qtconcurrentrun.h>
-#include <QtCharts>
 
 #include "alignmentdialog.h"
 #include "common/analytics.h"
@@ -43,7 +42,6 @@
 #include "background_peaks_update.h"
 #include "classificationWidget.h"
 
-using namespace QtCharts;
 
 QMap<int, QString> TableDockWidget::_idTitleMap;
 
