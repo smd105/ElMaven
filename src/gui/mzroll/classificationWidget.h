@@ -11,34 +11,73 @@ class ClassificationWidget : public QGraphicsView
 {
     Q_OBJECT
     public:
-    ClassificationWidget(TableDockWidget * tabledock);
+        ClassificationWidget(TableDockWidget * tabledock);
 
     public slots:
-    void showClassification();
+        /**
+         * @brief Manages all the plotting functions.
+         */ 
+        void showClassification();
 
     private:
-    QDialog* _inferenceVisual;
-    QVBoxLayout* _layout;
-    QGraphicsScene _scene;
-    QGraphicsView* _sceneView;
-    TableDockWidget* _tableDock;
-    PeakGroup* _group;
-    float _sumNegativeWeights;
-    float _sumPositiveWeights;
-    float minNegative;
-    float maxNegative;
-    float minPositive;
-    float maxPositive;
-    int _totalArrowCount;
+        QDialog* _inferenceVisual;
+        QVBoxLayout* _layout;
+        QGraphicsScene _scene;
+        QGraphicsView* _sceneView;
+        TableDockWidget* _tableDock;
+        PeakGroup* _group;
+        // Maintains the sum for negative shap values.
+        float _sumNegativeWeights;
+        // Maintails the sum for positive shap values.
+        float _sumPositiveWeights;
+        // Sum of abs(negative weights) and positive weights.
+        float _absoluteTotalWeight;
+        // Sum of negative weights and positive weights. 
+        float _totalWeight;
 
-    map<string, string> _changedLabelName;
+        // Maps the features defined to user friendly labes. 
+        map<string, string> _changedLabelName;
 
-    void setTitle();
-    int makeArrowForNegatives(float width, string label, int counter, int startPosition);
-    int makeArrowForPositives(float width, string label, int counter, int startPosition);
-    void plotAxes(int type, float startX, float EndX, float min, float max);
-    void addNameInList(QColor color, QString featureName, int iterator);
-    void initialiseLabelName();
+        /** 
+         * @brief Sets title (name of group) to the scene.   
+         */ 
+        void setTitle();
+        /**
+         * @brief Makes arrows for negative shap values. 
+         * @param shapValue ShapValue to plot.
+         * @param label Feature for the shapValue.
+         * @param counter Number of arrow plotted.
+         * @param Start position for the arrow.  
+         */ 
+        int makeArrowForNegatives(float shapValue, 
+                                  string label, 
+                                  int counter, 
+                                  int startPosition);
+
+        /**
+         * @brief Makes arrows for positive shap values. 
+         * @param shapValue ShapValue to plot.
+         * @param label Feature for the shapValue.
+         * @param Number of arrow plotted.
+         * @param Start position for the arrow.  
+         */ 
+        int makeArrowForPositives(float shapValue, 
+                                  string label, 
+                                  int counter, 
+                                  int startPosition);
+
+        /**
+         * @brief Inititalizes the map "_changedLabelName".
+         * @details Maps the value of features defined to 
+         * user defined labels.
+         */ 
+        void initialiseLabelName();
+
+        /**
+         * @brief Sets output value for a peakgroup to the
+         * scene.
+         */ 
+        void setOutputValue();
 
 };
 
