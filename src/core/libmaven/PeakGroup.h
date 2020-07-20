@@ -638,6 +638,15 @@ class PeakGroup{
         static bool compPvalue(const PeakGroup* a, const PeakGroup* b ) { return(a->changePValue< b->changePValue); }
 
         /**
+         * [compGroupId]
+         * @method compGroupId
+         * @param  a          []
+         * @param  b          []
+         * @return []
+         */
+        static bool compGroupId(const PeakGroup a, const PeakGroup b ) { return(a.groupId< b.groupId); }
+
+        /**
          * [compC13 ]
          * @method compC13
          * @param  a       []
@@ -803,6 +812,16 @@ class PeakGroup{
             return -1;
         }
 
+        void setUniqueId (int id)
+        {
+            _uniqueId = id;
+        }
+
+        int uniqueId()
+        {
+            return _uniqueId;
+        }
+
     private:
         Adduct* _adduct;
 
@@ -810,6 +829,9 @@ class PeakGroup{
 
         mzSlice _slice;
         bool _sliceSet;
+        // used in peakML in exporting groups for 
+        // classification including child.
+        int _uniqueId;
 
         float _expectedMz;
         float _expectedAbundance;

@@ -120,7 +120,7 @@ class CSVReports
         }
 
         static bool writeDataForPeakMl(const string& filePath,
-                                       const vector<PeakGroup>& groups);
+                                       vector<PeakGroup>& groups);
 
     private:
         /**

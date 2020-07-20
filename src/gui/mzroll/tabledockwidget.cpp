@@ -156,9 +156,9 @@ TableDockWidget::TableDockWidget(MainWindow *mw) {
   
   // selections in correlation table will trigger selection in this table
   connect(mw->getCorrelationTable(),
-          SIGNAL(groupIdSelected(int)),
+          SIGNAL(groupNameSelected(string)),
           this,
-          SLOT(displayNextGroupInCorrelationTable(int)));
+          SLOT(displayNextGroupInCorrelationTable(string)));
 
   setupFiltersDialog();
 
@@ -236,12 +236,12 @@ void TableDockWidget::undoLabel()
     }
 }
 
-void TableDockWidget::displayNextGroupInCorrelationTable(int groupId)
+void TableDockWidget::displayNextGroupInCorrelationTable(string groupName)
 {
   if (_mainwindow->getCorrelationTable()->currentTable() == this) {
     auto wasBlocked = treeWidget->blockSignals(true);
     for (auto item : _cycleBuffer) {
-      if (item->text(1).toInt() == groupId) {
+      if (item->text(2).toStdString() == groupName) {
         treeWidget->setCurrentItem(item);
         treeWidget->scrollTo(treeWidget->currentIndex(),
                               QAbstractItemView::PositionAtCenter);
@@ -626,9 +626,26 @@ void TableDockWidget::showAllGroups() {
     setIntensityColName();
 
   QMap<int, QTreeWidgetItem *> parents;
-  for (auto group : _topLevelGroups) {
-    int clusterId = group->clusterId;
-    if (clusterId && group->meanMz > 0 && group->peakCount() > 0) {
+
+  sort(allgroups.begin(), allgroups.end(), PeakGroup::compGroupId);
+  for (auto& group : allgroups) {
+      sort (group.children.begin(), group.children.end(), PeakGroup::compMz);
+  }
+
+  // setting unique id's to groups.
+  int uniqueId = 0;
+  for (int i = 0; i < allgroups.size(); i++)
+    allgroups[i].setUniqueId(++uniqueId);
+  
+  for (auto& group : allgroups) {
+    for (auto& child : group.children) {
+      child.setUniqueId(++uniqueId);
+    }
+  }
+
+  for (int i = 0; i < allgroups.size(); i++) {
+    int clusterId = allgroups[i].clusterId;
+    if (clusterId && allgroups[i].meanMz > 0 && allgroups[i].peakCount() > 0) {
       if (!parents.contains(clusterId)) {
         parents[clusterId] = new QTreeWidgetItem(treeWidget);
         if(hasClassifiedGroups)
@@ -1300,6 +1317,7 @@ void TableDockWidget::_refreshCycleBuffer()
   _cycleBuffer.clear();
 
   auto correlatedGroups = selectedGroup->getCorrelatedGroups();
+  
   if (correlatedGroups.empty()) {
     _mainwindow->getCorrelationTable()->setVisible(false);
     return;
@@ -1311,7 +1329,7 @@ void TableDockWidget::_refreshCycleBuffer()
   QTreeWidgetItemIterator itr(treeWidget);
   while (*itr) {
     QTreeWidgetItem *item = (*itr);
-    if (item && item->parent() == nullptr) {
+    if (item) {
       QVariant v = item->data(1, Qt::UserRole);
       PeakGroup *group = v.value<PeakGroup *>();
       if (group == nullptr)
@@ -1320,9 +1338,9 @@ void TableDockWidget::_refreshCycleBuffer()
       if (group == selectedGroup)
         _cycleBuffer.append(item);
 
-      if (correlatedGroups.count(group->groupId)) {
+      if (correlatedGroups.count(group->uniqueId())) {
         _cycleBuffer.append(item);
-        auto corr = correlatedGroups.at(group->groupId);
+        auto corr = correlatedGroups.at(group->uniqueId());
         _mainwindow->getCorrelationTable()->addCorrelatedPeakGroup(group, corr);
       }
     }

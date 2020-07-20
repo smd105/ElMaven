@@ -519,6 +519,11 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
     int startId = 1;
     for (auto& group : groups)
         group.groupId = startId++;
+
+    sort(groups.begin(), groups.end(), PeakGroup::compGroupId);
+    for (auto& group : groups) {
+        sort (group.children.begin(), group.children.end(), PeakGroup::compMz);
+    }
     CSVReports::writeDataForPeakMl(peakAttributesFile.toStdString(),
                                    groups);
     if (!QFile::exists(peakAttributesFile)) {
@@ -637,26 +642,42 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
         }
     }
 
+    auto assignPrediction = [&] (PeakGroup* group, 
+                                 map<int, pair<int, float>> predictions,
+                                 map<int, multimap<float, string>> inferences,
+                                 map<int, map<int, float>> correlations) {
+                                if (predictions.count(group->uniqueId())) {
+                                    pair<int, float> prediction = predictions.at(group->uniqueId());
+                                    group->setPredictedLabel(
+                                        PeakGroup::classificationLabelForValue(prediction.first),
+                                        prediction.second);
+                                }   
+                                if (inferences.count(group->uniqueId()))
+                                    group->setPredictionInference(inferences.at(group->uniqueId()));
+
+                                // add correlated groups
+                                if (correlations.count(group->uniqueId()) == 0)
+                                    return;
+
+                                auto& group_correlations = correlations.at(group->uniqueId());
+                                for (auto& elem : group_correlations)
+                                    group->addCorrelatedGroup(elem.first, elem.second);
+                            };
+
     for (auto& group : groups) {
-        if (predictions.count(group.groupId)) {
-            pair<int, float> prediction = predictions.at(group.groupId);
-            group.setPredictedLabel(
-                PeakGroup::classificationLabelForValue(prediction.first),
-                prediction.second);
-        }
-        if (inferences.count(group.groupId))
-            group.setPredictionInference(inferences.at(group.groupId));
-
-        // add correlated groups
-        if (correlations.count(group.groupId) == 0)
-            continue;
-
-        auto& group_correlations = correlations.at(group.groupId);
-        for (auto& elem : group_correlations)
-            group.addCorrelatedGroup(elem.first, elem.second);
+        assignPrediction(&group, 
+                         predictions, 
+                         inferences, 
+                         correlations);
+        
+        for (auto& child : group.children)
+            assignPrediction(&child, 
+                             predictions, 
+                             inferences, 
+                             correlations);
     }
 
-    removeFiles();
+  //  removeFiles();
 }
 
 bool BackgroundPeakUpdate::downloadPeakMlFilesFromAws(QString fileName)
