@@ -136,25 +136,29 @@ void BackgroundPeakUpdate::alignWithObiWarp()
 void BackgroundPeakUpdate::emitGroups()
 {
     peakDetector->pullAllIsotopes();
+
+}
+
+void BackgroundPeakUpdate::writeCSVRep(string setName)
+{
+    int lastUniqueId = 0;
+    for (auto&group : mavenParameters->allgroups)
+        group.setUniqueId(++lastUniqueId);
+
+    for(auto&group : mavenParameters->allgroups)
+        for (auto& child : group.children)
+            child->setUniqueId(++lastUniqueId);
+
+    if (mainwindow->mavenParameters->peakMl)
+        classifyGroups(mavenParameters->allgroups);
+
     for (PeakGroup& group : mavenParameters->allgroups) {
         if (mavenParameters->keepFoundGroups) {
             emit newPeakGroup(&group);
             QCoreApplication::processEvents();
         }
     }
-}
 
-void BackgroundPeakUpdate::writeCSVRep(string setName)
-{
-    if (mainwindow->mavenParameters->peakMl)
-        classifyGroups(mavenParameters->allgroups);
-
-    for (int j = 0; j < mavenParameters->allgroups.size(); j++) {
-        if (mavenParameters->keepFoundGroups) {
-            Q_EMIT(newPeakGroup(&(mavenParameters->allgroups[j])));
-            QCoreApplication::processEvents();
-        }
-    }
     Q_EMIT(updateProgressBar("Done", 1, 1));
 }
 
@@ -272,7 +276,10 @@ void BackgroundPeakUpdate::processSlices(vector<mzSlice*>&slices,
                                            mavenParameters);
             emit (updateProgressBar("Filtering out false adducts…", 0, 0));
         }
+        
         emitGroups();
+        
+        writeCSVRep(setName);
 }
 
 void BackgroundPeakUpdate::qtSlot(const string& progressText, unsigned int progress, int totalSteps)
@@ -303,6 +310,8 @@ void BackgroundPeakUpdate::processMassSlices() {
         align();
 
         emitGroups();
+
+        writeCSVRep("allslices");
         Q_EMIT(updateProgressBar("Status", 0, 100));
 }
 
@@ -520,10 +529,6 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
     for (auto& group : groups)
         group.groupId = startId++;
 
-    sort(groups.begin(), groups.end(), PeakGroup::compGroupId);
-    for (auto& group : groups) {
-        sort (group.children.begin(), group.children.end(), PeakGroup::compMz);
-    }
     CSVReports::writeDataForPeakMl(peakAttributesFile.toStdString(),
                                    groups);
     if (!QFile::exists(peakAttributesFile)) {
@@ -571,8 +576,7 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
         if (line.empty())
             continue;
 
-        vector<string> fields;
-        mzUtils::splitNew(line, ",", fields);
+        auto fields = mzUtils::split(line, ",");
         for (auto& field : fields) {
             int n = field.length();
             if (n > 2 && field[0] == '"' && field[n-1] == '"') {
@@ -662,22 +666,24 @@ void BackgroundPeakUpdate::classifyGroups(vector<PeakGroup>& groups)
                                 auto& group_correlations = correlations.at(group->uniqueId());
                                 for (auto& elem : group_correlations)
                                     group->addCorrelatedGroup(elem.first, elem.second);
+                                
                             };
-
+    
     for (auto& group : groups) {
         assignPrediction(&group, 
                          predictions, 
                          inferences, 
                          correlations);
-        
-        for (auto& child : group.children)
-            assignPrediction(&child, 
+    }
+    for (auto& group : groups) {
+        for (auto& child : group.children) {
+            assignPrediction(child.get(), 
                              predictions, 
                              inferences, 
                              correlations);
+        } 
     }
-
-  //  removeFiles();
+    removeFiles();
 }
 
 bool BackgroundPeakUpdate::downloadPeakMlFilesFromAws(QString fileName)

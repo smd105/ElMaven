@@ -81,8 +81,6 @@ class PeakGroup{
             return PeakGroup::ClassifiedLabel::None;
         }
 
-        PeakGroup();
-        PeakGroup(const PeakGroup& o);
         PeakGroup& operator=(const PeakGroup& o);
 
         bool operator==(const PeakGroup* o);
@@ -143,10 +141,13 @@ class PeakGroup{
         float maxHeightIntensity;
         float maxAreaNotCorrectedIntensity;
         float maxAreaTopNotCorrectedIntensity;
+        int predictedSVMLabel;
         float currentIntensity;
         float meanRt;
         float meanMz;
         int totalSampleCount;
+        int markedGoodByCloudModel = 0;
+        int markedBadByCloudModel = 0;
 
         int  ms2EventCount;
 
@@ -178,7 +179,8 @@ class PeakGroup{
         unsigned int  maxPeakOverlap;
         float maxQuality;
         float avgPeakQuality;
-
+        float groupQuality;
+        float weightedAvgPeakQuality;
         double minQuality;
         float maxPeakFracionalArea;
         float maxSignalBaseRatio;
@@ -190,6 +192,8 @@ class PeakGroup{
         float changeFoldRatio;
         float changePValue;
 
+        char label; 
+        
         bool isMS1();
 
         /**
@@ -257,6 +261,13 @@ class PeakGroup{
          * @return true if a slice has been set, false otherwise.
          */
         bool hasSlice() const;
+
+        /**
+         * [setLabel ]
+         * @method setLabel
+         * @param  label    []
+         */
+        void setLabel(char label);
 
         /**
          * @brief Check whether both bounds of the group's slice are close to
@@ -836,7 +847,6 @@ class PeakGroup{
         float _expectedMz;
         float _expectedAbundance;
 
-        string _tableName;
         shared_ptr<MavenParameters> _parameters;
         IntegrationType _integrationType;
 

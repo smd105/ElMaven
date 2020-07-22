@@ -22,12 +22,12 @@ AlignmentDialog::AlignmentDialog(MainWindow* parent) : QDialog(parent) {
 	workerThread = NULL;
 	workerThread = new BackgroundPeakUpdate(this);
 
-        connect(alignAlgo, SIGNAL(currentIndexChanged(int)), this, SLOT(algoChanged()));
-	connect(peakDetectionAlgo, SIGNAL(currentIndexChanged(int)), this, SLOT(algoChanged()));
-        connect(cancelButton, &QPushButton::clicked, this, &AlignmentDialog::cancel);
-        connect(local, SIGNAL(toggled(bool)),this, SLOT(setInitPenalty(bool)));
-        connect(restoreDefaultObiWarpParams, SIGNAL(clicked(bool)), this, SLOT(restorDefaultValues(bool)));
-        connect(showAdvanceParams, SIGNAL(toggled(bool)), this, SLOT(showAdvanceParameters(bool)));
+    connect(alignAlgo, SIGNAL(currentIndexChanged(int)), this, SLOT(algoChanged()));
+    connect(peakDetectionAlgo, SIGNAL(currentIndexChanged(int)), this, SLOT(algoChanged()));
+    connect(cancelButton, &QPushButton::clicked, this, &AlignmentDialog::cancel);
+    connect(local, SIGNAL(toggled(bool)),this, SLOT(setInitPenalty(bool)));
+    connect(restoreDefaultObiWarpParams, SIGNAL(clicked(bool)), this, SLOT(restorDefaultValues(bool)));
+    connect(showAdvanceParams, SIGNAL(toggled(bool)), this, SLOT(showAdvanceParameters(bool)));
 	connect(this, &AlignmentDialog::changeRefSample, &Aligner::setRefSample);
 	connect(samplesBox, &QComboBox::currentTextChanged, this, &AlignmentDialog::refSampleChanged);
 

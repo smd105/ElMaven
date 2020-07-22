@@ -168,7 +168,7 @@ void ProjectDatabase::saveGroups(const vector<PeakGroup*>& groups,
                                  const string& tableName)
 {
     _connection->begin();
-
+   
     for (const auto group : groups)
         saveGroupAndPeaks(group, 0, tableName);
 
@@ -233,7 +233,8 @@ int ProjectDatabase::saveGroupAndPeaks(PeakGroup* group,
                      , :prediction_probability             \
                      , :prediction_inference_key           \
                      , :prediction_inference_value         \
-                     , :correlated_groups                  )");
+                     , :correlated_groups                  \
+                     , :unique_id                          )");
 
     groupsQuery->bind(":parent_group_id", parentGroupId);
     groupsQuery->bind(":table_group_id", group->groupId);
@@ -349,6 +350,7 @@ int ProjectDatabase::saveGroupAndPeaks(PeakGroup* group,
     }
 
     groupsQuery->bind(":correlated_groups", correlatedGroups);
+    groupsQuery->bind(":unique_id", group->uniqueId());
 
     groupsQuery->bind(":prediction_inference_key", keyString);
     groupsQuery->bind(":prediction_inference_value", valueString);
@@ -1233,12 +1235,12 @@ vector<PeakGroup*> ProjectDatabase::loadGroups(const vector<mzSample*>& loaded,
                                correlatedGroups.size() - 2);
             int correlatedGroupId;
             float correlationFactor;
-            vector<string> eachGroup;
-            mzUtils::splitNew(correlatedGroups, ", ", eachGroup);  
+            
+            auto eachGroup = mzUtils::split(correlatedGroups, ", ");  
             for (auto groupValue : eachGroup)
             {
-                vector<string> values;
-                mzUtils::splitNew(groupValue, ": ", values);
+                
+                auto values = mzUtils::split(groupValue, ": ");
                 correlatedGroupId = mzUtils::string2integer(values[0]);
                 correlationFactor = mzUtils::string2float(values[1]);
                 group->addCorrelatedGroup(correlatedGroupId,
@@ -1286,6 +1288,8 @@ vector<PeakGroup*> ProjectDatabase::loadGroups(const vector<mzSample*>& loaded,
                 group->samples.push_back(*sampleIter);
             }
         }
+        int unique_id = groupsQuery->integerValue("unique_id");
+        group->setUniqueId(unique_id);
 
         float sliceMzMin = groupsQuery->doubleValue("slice_mz_min");
         float sliceMzMax = groupsQuery->doubleValue("slice_mz_max");
@@ -1334,7 +1338,7 @@ vector<PeakGroup*> ProjectDatabase::loadGroups(const vector<mzSample*>& loaded,
 
         loadGroupPeaks(group, databaseId, loaded);
         group->groupStatistics();
-
+        
         if (parentGroupId == 0) {
             groups.push_back(group);
         } else {
@@ -1358,7 +1362,6 @@ vector<PeakGroup*> ProjectDatabase::loadGroups(const vector<mzSample*>& loaded,
         if (!foundParent)
             groups.push_back(child);
     }
-
 
     cerr << "Debug: Read in " << groups.size() << " groups" << endl;
     return groups;

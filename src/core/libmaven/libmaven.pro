@@ -54,7 +54,8 @@ INCLUDEPATH +=  $$top_srcdir/3rdparty/pugixml/src/ \
                 $$top_srcdir/3rdparty/NimbleDSP/src \
                 $$top_srcdir/3rdparty/doctest       \
                 $$top_srcdir/3rdparty/json      \
-                $$top_srcdir/tests/test-libmaven
+                $$top_srcdir/tests/test-libmaven    \
+                $$top_srcdir/3rdparty/libsvm
 
 QMAKE_LFLAGS += -L$$top_builddir/libs
 
@@ -108,7 +109,10 @@ SOURCES = base64.cpp \
           datastructures/mzSlice.cpp \
           zlib.cpp \
           adductdetection.cpp \
-          spectrallibexport.cpp
+          spectrallibexport.cpp \
+          groupClassifier.cpp \
+          groupFeatures.cpp \
+          svmPredictor.cpp
 
 HEADERS += constants.h \
            base64.h \

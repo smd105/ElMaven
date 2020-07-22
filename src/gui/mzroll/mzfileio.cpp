@@ -1148,7 +1148,7 @@ void mzFileIO::_readPeakTablesFromSQLiteProject(const vector<mzSample*> newSampl
 
     // load all peakgroups
     auto groups = _currentProject->loadGroups(newSamples,
-                                              _mainwindow->mavenParameters);
+                                              _mainwindow->mavenParameters);        
     auto groupCount = 0;
     for (auto& group : groups) {
         // assign a compound from global "DB" object to the group
@@ -1328,8 +1328,6 @@ PeakGroup* mzFileIO::readGroupXML(QXmlStreamReader& xml, PeakGroup* parent)
                       xml.attributes().value("expectedMz").toString().toFloat(),
                       0.0f);
     group->label = xml.attributes().value("label").toString().toInt();
-    group->expectedMz =
-        xml.attributes().value("expectedMz").toString().toFloat();
     group->setUserLabel(xml.attributes().value("label").toString().toInt());
     group->setType((PeakGroup::GroupType)xml.attributes()
                        .value("type")

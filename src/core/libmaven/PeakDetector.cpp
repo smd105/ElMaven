@@ -255,7 +255,6 @@ vector<mzSlice*> PeakDetector::processCompounds(vector<Compound*> set,
             slices.push_back(slice);
         }
     }
-
     return slices;
 }
 

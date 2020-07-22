@@ -47,6 +47,8 @@ class IsotopeDialog;
 class IsotopePlotDockWidget;
 class IsotopePlot;
 class Classifier;
+class groupClassifier;
+class svmPredictor;
 class ClassifierNeuralNet;
 class ClassifierNaiveBayes;
 class HeatMap;
@@ -198,6 +200,14 @@ public:
 		return clsf;
 	}
 
+    groupClassifier * getGroupClassifier() {
+ 		return groupClsf;
+ 	}
+ 
+  	svmPredictor * getSVMPredictor() {
+ 		return groupPred;
+ 	}
+
         LibraryManager* getLibraryManager() { return _libraryManager; }
 
 	MatrixXf getIsotopicMatrix(PeakGroup* group);
@@ -253,8 +263,6 @@ public:
      * restoration.
      */
     void saveProjectForFilename(QList<shared_ptr<PeakGroup> > groupsToBeSaved);
-
-	void loadPollySettings(QString fileName);
 
     /**
      * @brief Obtain the currently "active" table, being browsed, in the main
@@ -516,6 +524,8 @@ private:
 	Analytics* analytics;
 	QSettings* settings;
 	ClassifierNeuralNet* clsf;
+    groupClassifier* groupClsf;
+ 	svmPredictor* groupPred;
 
 	QList<QPointer<TableDockWidget> > groupTables;
 	//Added when merging with Maven776 - Kiran

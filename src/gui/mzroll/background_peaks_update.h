@@ -151,7 +151,6 @@ protected:
 	void run(void);
 	
 private:
-	string runFunction;
     bool _untargetedMustHaveMs2;
     string runFunction;
 	MainWindow *mainwindow;
@@ -163,6 +162,12 @@ private:
 	void alignUsingDatabase();
 	void alignWithObiWarp();
 
+	/**
+	 * [write CSV Report]
+	 * @param setName [name of the set]
+	 */
+	void writeCSVRep(string setName);
+	
     void emitGroups();
 
 	/**

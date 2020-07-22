@@ -118,6 +118,7 @@ LIBS +=  -lmaven \
          -lz \
          -lpollyCLI \
          -lprojectDB \
+         -lsvm \
          -lcommon \
          -lmgf 
 
@@ -248,7 +249,6 @@ HEADERS += stable.h \
            peakeditor.h \
            groupsettingslog.h \
            projectsaveworker.h \
-           updatedialog.h       \
            multiselectcombobox.h \
            correlationtable.h   \
            classificationWidget.h

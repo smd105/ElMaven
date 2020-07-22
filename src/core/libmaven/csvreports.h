@@ -122,6 +122,9 @@ class CSVReports
         static bool writeDataForPeakMl(const string& filePath,
                                        vector<PeakGroup>& groups);
 
+        void writeDataForPolly(const std::string& file,
+                                   std::list<PeakGroup> groups);                              
+
     private:
         /**
          *@brief-  helper function to write group info

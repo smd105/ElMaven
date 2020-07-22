@@ -130,7 +130,8 @@
                                            , prediction_probability             REAL                              \
                                            , prediction_inference_key           TEXT                              \
                                            , prediction_inference_value         TEXT                              \
-                                           , correlated_groups                  TEXT                              );"
+                                           , correlated_groups                  TEXT                              \
+                                           , unique_id                          INTEGER                           );"
 
 #define CREATE_COMPOUNDS_TABLE \
     "CREATE TABLE IF NOT EXISTS compounds ( compound_id           TEXT               \

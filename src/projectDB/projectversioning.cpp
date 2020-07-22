@@ -814,6 +814,7 @@ map<int, string> dbVersionUpgradeScripts = {
         "ALTER TABLE peakgroups ADD COLUMN prediction_inference_key TEXT;"
         "ALTER TABLE peakgroups ADD COLUMN prediction_inference_value TEXT;"
         "ALTER TABLE peakgroups ADD COLUMN correlated_groups TEXT;"
+        "ALTER TABLE peakgroups ADD COLUMN unique_id INTEGER;"
         "COMMIT;"  
     }
 };

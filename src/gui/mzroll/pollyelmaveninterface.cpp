@@ -1091,9 +1091,9 @@ QStringList PollyElmavenInterfaceDialog::_prepareFilesToUpload(QDir qdir,
                             + QDir::separator()
                             + datetimestamp
                             + "_Peaks_information_json_Elmaven_Polly.json";
-    peakTable->exportJsonToPolly(_writeableTempDir, jsonFilename);
 
     if (_selectedApp == PollyApp::PollyPhi) {
+        peakTable->exportJsonToPolly(_writeableTempDir, jsonFilename, true);
         QCoreApplication::processEvents();
         //Preparing the sample cohort file
         QString sampleCohortFileName = _writeableTempDir + QDir::separator() + datetimestamp +
@@ -1116,9 +1116,8 @@ QStringList PollyElmavenInterfaceDialog::_prepareFilesToUpload(QDir qdir,
                             + datetimestamp
                             + "_Cloud_model_mapping_file.csv";
         csvrpt.writeDataForPolly(modelFile.toStdString(), groups);
-    } else {
-        peakTable->exportJsonToPolly(_writeableTempDir, jsonFilename);
-    }
+    } else
+        peakTable->exportJsonToPolly(_writeableTempDir, jsonFilename, false);
 
     // Saving settings file
     QByteArray ba = (_writeableTempDir + QDir::separator()
@@ -1183,7 +1182,7 @@ PollyElmavenInterfaceDialog::_prepareSessionFiles(QString datetimestamp)
                            + "_"
                            + tableName
                            + ".json";
-    peakTable->exportJsonToPolly(_writeableTempDir, jsonFilename);
+    peakTable->exportJsonToPolly(_writeableTempDir, jsonFilename, false);
     filenames.append(jsonFilename);
 
     QCoreApplication::processEvents();

@@ -18,7 +18,7 @@ public:
     explicit CorrelationTable(QWidget *parent = nullptr);
     ~CorrelationTable();
 
-    void setReferencePeakGroup(PeakGroup* group);
+    void setReferencePeakGroup(shared_ptr<PeakGroup> group);
     void addCorrelatedPeakGroup(PeakGroup* group, float correlation);
     void clearCorrelation();
     void setCurrentTable(TableDockWidget* table) { _table = table; }

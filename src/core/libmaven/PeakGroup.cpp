@@ -96,7 +96,8 @@ void PeakGroup::copyObj(const PeakGroup& o)  {
     metaGroupId= o.metaGroupId;
     clusterId = o.clusterId;
     groupRank= o.groupRank;
-
+    _uniqueId = o._uniqueId;
+    
     minQuality = o.minQuality;
     minIntensity = o.minIntensity;
     maxIntensity= o.maxIntensity;
@@ -137,7 +138,7 @@ void PeakGroup::copyObj(const PeakGroup& o)  {
     _predictedLabel = o.predictedLabel();
     _predictionProbability = o.predictionProbability();
     _predictionInference = o.predictionInference();
-    expectedAbundance = o.expectedAbundance;
+    _expectedAbundance = o._expectedAbundance;
     isotopeC13count=o.isotopeC13count;
 
     deletedFlag = o.deletedFlag;
@@ -544,7 +545,7 @@ void PeakGroup::reduce() { // make sure there is only one peak per sample
     }
     //	cerr << "\t\t\treduce() from " << startSize << " to " << peaks.size() << endl;
 }
-
+ 
 void PeakGroup::setLabel(char label)
 {
     this->label = label;
@@ -1024,8 +1025,8 @@ void PeakGroup::setUserLabel(char label)
     }
 
     for (auto& child : children) {
-        if (child.tagString == "C12 PARENT" && child._userLabel != label)
-            child.setUserLabel(label);
+        if (child->tagString == "C12 PARENT" && child->_userLabel != label)
+            child->setUserLabel(label);
     }
 }
 
@@ -1047,10 +1048,10 @@ void PeakGroup::setPredictedLabel(const ClassifiedLabel label,
         return;
     }
     for (auto& child : children) {
-        if (child.tagString == "C12 PARENT"
-            && child._predictedLabel != label
-            && child._predictionProbability != probability)
-            child.setPredictedLabel(label, probability);
+        if (child->tagString == "C12 PARENT"
+            && child->_predictedLabel != label
+            && child->_predictionProbability != probability)
+            child->setPredictedLabel(label, probability);
     }
 }
 

@@ -32,7 +32,7 @@ CorrelationTable::~CorrelationTable()
     delete ui;
 }
 
-void CorrelationTable::setReferencePeakGroup(PeakGroup* group)
+void CorrelationTable::setReferencePeakGroup(shared_ptr<PeakGroup> group)
 {
     if (group == nullptr)
         return;

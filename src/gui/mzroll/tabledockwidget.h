@@ -3,6 +3,7 @@
 
 #include <QWidgetAction>
 
+#include "pollyintegration.h"
 #include "stable.h"
 #include "PeakGroup.h"
 
@@ -19,6 +20,8 @@ class PeakDetector;
 class MultiSelectComboBox;
 class ClassificationWidget;
 class CorrelationTable;
+class groupClassifier;
+class svmPredictor;
 
 using namespace std;
 
@@ -33,6 +36,7 @@ public:
   JSONReports *jsonReports;
   ClassificationWidget* classificationWidget;
   bool hasClassifiedGroups;
+  QString writableTempS3Dir;
   /**
    * @brief vallgroups will be used by libmaven/jsonReports.cpp
    * @detail For json export. Since libmaven is written only standard
@@ -49,7 +53,7 @@ public:
   map<int, pair<string, float>> undoBuffer;
 
   enum tableViewType { groupView = 0, peakView = 1 };
-
+  
   enum PeakTableSubsetType {
       Selected = 0,
       All = 1,
@@ -228,7 +232,7 @@ public Q_SLOTS:
    * @param subsets A list of subsets whose items will remain visible.
    */
   void showOnlySubsets(QList<PeakTableSubsetType> visibleSubsets);
-
+  
   /**
    * @brief Filters the tree-view such that only labels selected in the legend
    * dropdown are visible.
@@ -264,6 +268,9 @@ public Q_SLOTS:
   void updateItem(QTreeWidgetItem *item, bool updateChildren = true);
   void updateStatus();
 
+  //Group validation functions
+  void validateGroup(PeakGroup* grp, QTreeWidgetItem* item);
+  
   virtual void markGroupBad();
   virtual void markGroupGood();
   virtual void unmarkGroup();
@@ -372,7 +379,21 @@ private:
   ClusterDialog *clusterDialog;
   QDialog *filtersDialog;
   QMap<QString, QHistogramSlider *> sliders;
-  peakTableSelectionType peakTableSelection;
+  PeakTableSubsetType peakTableSelection;
+  QList<PeakGroup *> getCustomGroups(PeakTableSubsetType peakSelection);
+  
+  /**
+   * @brief Constructs lists of tree items that can be categorized within each
+   * `PeakTableSubsetType`.
+   * @details Items that themselves contain child groups will be ignored and
+   * their child groups will be added to the respective lists. Often the child
+   * groups will have their own class (which is different from that of the
+   * parent).
+   * @return Each `PeakTableSubsetType` mapping to the items in tree widget that
+   * belong to that subset.
+   */
+  QMap<PeakTableSubsetType, QList<QTreeWidgetItem*>> _peakTableGroupedBySubsets();
+
   bool tableSelectionFlagUp;
   bool tableSelectionFlagDown;
   QShortcut * ctrlZ;
@@ -505,6 +526,21 @@ public:
    */
   virtual void keyPressEvent(QKeyEvent *event);
   void setData(QStringList vstrings) { strings = vstrings; }
+};
+
+class UploadPeaksToCloudThread : public QThread
+{
+    Q_OBJECT
+    public:
+        UploadPeaksToCloudThread(PollyIntegration* iPolly);
+        ~UploadPeaksToCloudThread();
+        void run();
+        QString sessionId;
+        QString fileName;
+        QString filePath;
+        PollyIntegration* _pollyintegration;
+    signals:
+        void resultReady(QString sessionId);
 };
 
 #endif
